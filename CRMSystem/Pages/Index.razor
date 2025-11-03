@@ -1,0 +1,184 @@
+﻿@page "/"
+@using CRMSystem.Services
+@using CRMSystem.Models
+@inject IKundeService KundeService
+
+<PageTitle>CRM System Dashboard</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4">🏢 CRM System Dashboard</h1>
+            <p class="lead">Willkommen in Ihrem Kundenmanagement-System</p>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">@kundenCount</h4>
+                            <p class="card-text">Gesamtkunden</p>
+                        </div>
+                        <div class="align-self-center">
+                            <span style="font-size: 2rem;">👥</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">@heuteErstellteKunden</h4>
+                            <p class="card-text">Heute hinzugefügt</p>
+                        </div>
+                        <div class="align-self-center">
+                            <span style="font-size: 2rem;">🆕</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">@kundenMitFirma</h4>
+                            <p class="card-text">Mit Firma</p>
+                        </div>
+                        <div class="align-self-center">
+                            <span style="font-size: 2rem;">🏢</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">@kundenMitTelefon</h4>
+                            <p class="card-text">Mit Telefon</p>
+                        </div>
+                        <div class="align-self-center">
+                            <span style="font-size: 2rem;">📞</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>🚀 Schnellaktionen</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2 d-md-flex">
+                        <a href="/kunden" class="btn btn-primary btn-lg me-2">
+                            ➕ Neuen Kunden anlegen
+                        </a>
+                        <a href="/kunden" class="btn btn-outline-primary btn-lg me-2">
+                            👥 Alle Kunden anzeigen
+                        </a>
+                        <button class="btn btn-outline-secondary btn-lg" @onclick="StatistikAktualisieren">
+                            🔄 Aktualisieren
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (letzteKunden.Any())
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>📋 Letzte Kunden</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Firma</th>
+                                        <th>Erstellt am</th>
+                                        <th>Aktion</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var kunde in letzteKunden)
+                                    {
+                                        <tr>
+                                            <td>@kunde.Name</td>
+                                            <td>@kunde.Email</td>
+                                            <td>@kunde.Firma</td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    @kunde.Erstellungsdatum.ToString("dd.MM.yyyy HH:mm")
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <a href="/kunden" class="btn btn-sm btn-outline-primary">
+                                                    Bearbeiten
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Kunde> alleKunden = new List<Kunde>();
+    private int kundenCount = 0;
+    private int heuteErstellteKunden = 0;
+    private int kundenMitFirma = 0;
+    private int kundenMitTelefon = 0;
+    private List<Kunde> letzteKunden = new List<Kunde>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await StatistikLaden();
+    }
+
+    private async Task StatistikLaden()
+    {
+        alleKunden = await KundeService.GetKundenAsync();
+
+        kundenCount = alleKunden.Count;
+        heuteErstellteKunden = alleKunden.Count(k => k.Erstellungsdatum.Date == DateTime.Today);
+        kundenMitFirma = alleKunden.Count(k => !string.IsNullOrEmpty(k.Firma));
+        kundenMitTelefon = alleKunden.Count(k => !string.IsNullOrEmpty(k.Telefon));
+        letzteKunden = alleKunden.OrderByDescending(k => k.Erstellungsdatum).Take(5).ToList();
+
+        StateHasChanged();
+    }
+
+    private async Task StatistikAktualisieren()
+    {
+        await StatistikLaden();
+    }
+}
