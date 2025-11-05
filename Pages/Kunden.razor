@@ -1,0 +1,394 @@
+﻿@page "/kunden"
+@using CRMSystem.Services
+@using CRMSystem.Models
+@using System.Text
+@inject IKundeService KundeService
+@inject IJSRuntime JSRuntime
+
+<h1>Kunden Übersicht</h1>
+
+<!-- Suche und Filter -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <input @bind="suchText" class="form-control" placeholder="Namen oder Email suchen..." />
+            <button @onclick="FilternUndSortieren" class="btn btn-primary" type="button">
+                🔍 Suchen
+            </button>
+            <button @onclick="SuchTextLeeren" class="btn btn-outline-secondary" type="button">
+                ✕ Löschen
+            </button>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <select @bind="sortierung" class="form-select">
+            <option value="name">Nach Name</option>
+            <option value="firma">Nach Firma</option>
+            <option value="datum">Nach Datum</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <div class="form-text">@gefilterteKunden.Count von @kunden.Count Kunden</div>
+    </div>
+</div>
+
+<!-- Suchstatus -->
+@if (!string.IsNullOrEmpty(suchText))
+{
+    <div class="alert alert-light mb-3">
+        <small>
+            🔍 Suche nach: "<strong>@suchText</strong>" |
+            Gefunden: <strong>@gefilterteKunden.Count</strong> Kunden
+            <button @onclick="SuchTextLeeren" class="btn btn-sm btn-outline-secondary ms-2">✕</button>
+        </small>
+    </div>
+}
+
+<h3>Neuen Kunden anlegen</h3>
+<div class="row">
+    <div class="col-md-6">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Name *</label>
+                    <input @bind="neuerKunde.Name" class="form-control" placeholder="Vor- und Nachname" />
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Email</label>
+                    <input @bind="neuerKunde.Email" class="form-control" placeholder="email@beispiel.de" />
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Telefon</label>
+                    <input @bind="neuerKunde.Telefon" class="form-control" placeholder="+49 123 456789" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Firma</label>
+                    <input @bind="neuerKunde.Firma" class="form-control" placeholder="Firmenname" />
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Adresse</label>
+                    <textarea @bind="neuerKunde.Adresse" class="form-control" placeholder="Straße, PLZ, Stadt" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">Notizen</label>
+            <textarea @bind="neuerKunde.Notizen" class="form-control" placeholder="Interne Notizen..." rows="2"></textarea>
+        </div>
+        <button @onclick="KundeHinzufuegen" class="btn btn-success mt-2">
+            ➕ Kunde hinzufügen
+        </button>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <div class="alert alert-info mt-3">@statusMessage</div>
+}
+
+<div class="d-flex justify-content-between align-items-center mt-4">
+    <h3>Kundenliste</h3>
+    <button @onclick="Exportieren" class="btn btn-success" title="Daten exportieren">
+        📤 CSV Export
+    </button>
+</div>
+
+@if (gefilterteKunden.Count == 0)
+{
+    <div class="alert alert-warning">
+        <strong>Keine Kunden gefunden.</strong> @(kunden.Count == 0 ? "Fügen Sie Ihren ersten Kunden hinzu!" : "Versuchen Sie einen anderen Suchbegriff.")
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Kontakt</th>
+                    <th>Firma</th>
+                    <th>Erstellt am</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var kunde in gefilterteKunden)
+                {
+                    <tr>
+                        <td><strong>#@kunde.Id</strong></td>
+                        <td>
+                            <div class="fw-bold">@kunde.Name</div>
+                            @if (!string.IsNullOrEmpty(kunde.Notizen))
+                            {
+                                <small class="text-muted" title="@kunde.Notizen">📝</small>
+                            }
+                        </td>
+                        <td>
+                            <div>📧 @kunde.Email</div>
+                            @if (!string.IsNullOrEmpty(kunde.Telefon))
+                            {
+                                <div>📞 @kunde.Telefon</div>
+                            }
+                        </td>
+                        <td>@kunde.Firma</td>
+                        <td>
+                            <small class="text-muted">@kunde.Erstellungsdatum.ToString("dd.MM.yyyy")</small>
+                        </td>
+                        <td>
+                            <button @onclick="() => BearbeitenStarten(kunde.Id)"
+                                    class="btn btn-warning btn-sm" title="Kunde bearbeiten">
+                                ✏️ Bearbeiten
+                            </button>
+                            <button @onclick="() => LoeschenBestätigen(kunde)"
+                                    class="btn btn-danger btn-sm" title="Kunde löschen">
+                                🗑️ Löschen
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- Bearbeiten Modal -->
+@if (bearbeitenModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Kunde bearbeiten</h5>
+                    <button type="button" class="btn-close" @onclick="BearbeitenAbbrechen"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Name *</label>
+                                <input @bind="bearbeitenKunde.Name" class="form-control" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Email</label>
+                                <input @bind="bearbeitenKunde.Email" class="form-control" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Telefon</label>
+                                <input @bind="bearbeitenKunde.Telefon" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Firma</label>
+                                <input @bind="bearbeitenKunde.Firma" class="form-control" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Adresse</label>
+                                <textarea @bind="bearbeitenKunde.Adresse" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Notizen</label>
+                        <textarea @bind="bearbeitenKunde.Notizen" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="BearbeitenAbbrechen" class="btn btn-secondary">Abbrechen</button>
+                    <button @onclick="KundeAktualisieren" class="btn btn-primary">Speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Löschen Modal -->
+@if (loeschenModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Kunde löschen</h5>
+                    <button type="button" class="btn-close" @onclick="LoeschenAbbrechen"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <h6>⚠️ Achtung: Diese Aktion kann nicht rückgängig gemacht werden!</h6>
+                        <p class="mb-0">Sind Sie sicher, dass Sie den Kunden <strong>@loeschenKunde?.Name</strong> löschen möchten?</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="LoeschenAbbrechen" class="btn btn-secondary">Abbrechen</button>
+                    <button @onclick="KundeLoeschen" class="btn btn-danger">🗑️ Endgültig löschen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="mt-4">
+    <a href="/" class="btn btn-secondary">← Zurück zur Startseite</a>
+    <span class="text-muted ms-3">Gesamt: @kunden.Count Kunden</span>
+</div>
+
+@code {
+    private List<Kunde> kunden = new List<Kunde>();
+    private List<Kunde> gefilterteKunden = new List<Kunde>();
+    private Kunde neuerKunde = new Kunde();
+    private string statusMessage = "";
+    private string suchText = "";
+    private string sortierung = "name";
+
+    private bool bearbeitenModal = false;
+    private Kunde bearbeitenKunde = new Kunde();
+
+    private bool loeschenModal = false;
+    private Kunde? loeschenKunde;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadKunden();
+    }
+
+    private async Task LoadKunden()
+    {
+        kunden = await KundeService.GetKundenAsync();
+        FilternUndSortieren();
+    }
+
+    private void FilternUndSortieren()
+    {
+        var result = kunden;
+
+        if (!string.IsNullOrWhiteSpace(suchText))
+        {
+            var search = suchText.ToLower();
+            result = kunden.Where(k =>
+                k.Name.ToLower().Contains(search) ||
+                k.Email.ToLower().Contains(search) ||
+                (k.Firma != null && k.Firma.ToLower().Contains(search))
+            ).ToList();
+        }
+
+        if (sortierung == "name")
+            result = result.OrderBy(k => k.Name).ToList();
+        else if (sortierung == "firma")
+            result = result.OrderBy(k => k.Firma).ToList();
+        else if (sortierung == "datum")
+            result = result.OrderBy(k => k.Erstellungsdatum).ToList();
+
+        gefilterteKunden = result;
+        StateHasChanged();
+    }
+
+    private void SuchTextLeeren()
+    {
+        suchText = "";
+        FilternUndSortieren();
+    }
+
+    private async Task KundeHinzufuegen()
+    {
+        if (string.IsNullOrWhiteSpace(neuerKunde.Name))
+        {
+            statusMessage = "⚠️ Bitte geben Sie einen Namen ein!";
+            return;
+        }
+
+        neuerKunde.Erstellungsdatum = DateTime.Now;
+        await KundeService.AddKundeAsync(neuerKunde);
+        statusMessage = $"✅ Kunde '{neuerKunde.Name}' wurde gespeichert!";
+
+        neuerKunde = new Kunde();
+        await LoadKunden();
+    }
+
+    private async Task BearbeitenStarten(int id)
+    {
+        var kunde = await KundeService.GetKundeByIdAsync(id);
+        if (kunde != null)
+        {
+            bearbeitenKunde = new Kunde
+                {
+                    Id = kunde.Id,
+                    Name = kunde.Name,
+                    Email = kunde.Email,
+                    Telefon = kunde.Telefon,
+                    Firma = kunde.Firma,
+                    Adresse = kunde.Adresse,
+                    Notizen = kunde.Notizen
+                };
+            bearbeitenModal = true;
+            StateHasChanged();
+        }
+    }
+
+    private void BearbeitenAbbrechen()
+    {
+        bearbeitenModal = false;
+        bearbeitenKunde = new Kunde();
+        StateHasChanged();
+    }
+
+    private async Task KundeAktualisieren()
+    {
+        await KundeService.UpdateKundeAsync(bearbeitenKunde);
+        statusMessage = $"✅ Kunde '{bearbeitenKunde.Name}' wurde aktualisiert!";
+        bearbeitenModal = false;
+        await LoadKunden();
+    }
+
+    private void LoeschenBestätigen(Kunde kunde)
+    {
+        loeschenKunde = kunde;
+        loeschenModal = true;
+        StateHasChanged();
+    }
+
+    private void LoeschenAbbrechen()
+    {
+        loeschenModal = false;
+        loeschenKunde = null;
+        StateHasChanged();
+    }
+
+    private async Task KundeLoeschen()
+    {
+        if (loeschenKunde != null)
+        {
+            await KundeService.DeleteKundeAsync(loeschenKunde.Id);
+            statusMessage = $"🗑️ Kunde '{loeschenKunde.Name}' wurde gelöscht!";
+            loeschenModal = false;
+            loeschenKunde = null;
+            await LoadKunden();
+        }
+    }
+
+    private async Task Exportieren()
+    {
+        try
+        {
+            var csvData = await KundeService.ExportKundenToCsvAsync();
+            var fileName = $"Kunden_Export_{DateTime.Now:yyyy-MM-dd_HH-mm}.csv";
+            await DownloadFile(csvData, fileName, "text/csv");
+            statusMessage = $"✅ Export erfolgreich! Datei '{fileName}' wurde heruntergeladen.";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"❌ Export fehlgeschlagen: {ex.Message}";
+        }
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile(string content, string fileName, string contentType)
+    {
+        var bytes = Encoding.UTF8.GetBytes(content);
+        var base64 = Convert.ToBase64String(bytes);
+        await JSRuntime.InvokeVoidAsync("downloadFile", base64, fileName, contentType);
+    }
+}
