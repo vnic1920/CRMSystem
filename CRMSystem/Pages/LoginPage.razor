@@ -1,0 +1,64 @@
+﻿@page "/login"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@inject NavigationManager Navigation
+@inject SignInManager<IdentityUser> SignInManager
+
+<PageTitle>CRM - Login</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title text-center">🔐 CRM System Login</h3>
+
+                    <div class="mb-3">
+                        <label class="form-label">E-Mail</label>
+                        <input type="email" class="form-control" @bind="userEmail" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Passwort</label>
+                        <input type="password" class="form-control" @bind="userPassword" />
+                    </div>
+
+                    <button class="btn btn-primary w-100" @onclick="PerformLogin">Anmelden</button>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mt-3">
+                            @errorMessage
+                        </div>
+                    }
+
+                    <div class="mt-3">
+                        <small class="text-muted">Demo: admin@crm.de / admin123</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string userEmail = "admin@crm.de";
+    private string userPassword = "admin123";
+    private string errorMessage = string.Empty;
+
+    private async Task PerformLogin()
+    {
+        errorMessage = string.Empty;
+
+        var result = await SignInManager.PasswordSignInAsync(userEmail, userPassword, false, false);
+
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo("/kunden");
+        }
+        else
+        {
+            errorMessage = "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Daten.";
+        }
+    }
+}
