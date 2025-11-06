@@ -1,34 +1,41 @@
 ﻿using CRMSystem.Models;
+using CRMSystem.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace CRMSystem.Services
 {
     public class KundeService : IKundeService
     {
-        private List<Kunde> _kunden = new List<Kunde>();
-        private int _nextId = 1;
+        private readonly ApplicationDbContext _context;
 
-        public Task<List<Kunde>> GetKundenAsync()
+        public KundeService(ApplicationDbContext context)
         {
-            return Task.FromResult(_kunden);
+            _context = context;
         }
 
-        public Task<Kunde?> GetKundeByIdAsync(int id)
+        public async Task<List<Kunde>> GetKundenAsync()
         {
-            var kunde = _kunden.FirstOrDefault(k => k.Id == id);
-            return Task.FromResult(kunde);
+            return await _context.Kunden
+                .OrderByDescending(k => k.Erstellungsdatum)
+                .ToListAsync();
         }
 
-        public Task AddKundeAsync(Kunde kunde)
+        public async Task<Kunde?> GetKundeByIdAsync(int id)
         {
-            kunde.Id = _nextId++;
-            _kunden.Add(kunde);
-            return Task.CompletedTask;
+            return await _context.Kunden.FindAsync(id);
         }
 
-        public Task UpdateKundeAsync(Kunde kunde)
+        public async Task AddKundeAsync(Kunde kunde)
         {
-            var existingKunde = _kunden.FirstOrDefault(k => k.Id == kunde.Id);
+            kunde.Erstellungsdatum = DateTime.Now;
+            _context.Kunden.Add(kunde);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateKundeAsync(Kunde kunde)
+        {
+            var existingKunde = await _context.Kunden.FindAsync(kunde.Id);
             if (existingKunde != null)
             {
                 existingKunde.Name = kunde.Name;
@@ -37,31 +44,33 @@ namespace CRMSystem.Services
                 existingKunde.Firma = kunde.Firma;
                 existingKunde.Adresse = kunde.Adresse;
                 existingKunde.Notizen = kunde.Notizen;
+
+                await _context.SaveChangesAsync();
             }
-            return Task.CompletedTask;
         }
 
-        public Task DeleteKundeAsync(int id)
+        public async Task DeleteKundeAsync(int id)
         {
-            var kunde = _kunden.FirstOrDefault(k => k.Id == id);
+            var kunde = await _context.Kunden.FindAsync(id);
             if (kunde != null)
             {
-                _kunden.Remove(kunde);
+                _context.Kunden.Remove(kunde);
+                await _context.SaveChangesAsync();
             }
-            return Task.CompletedTask;
         }
 
-        public Task<string> ExportKundenToCsvAsync()
+        public async Task<string> ExportKundenToCsvAsync()
         {
+            var kunden = await GetKundenAsync();
             var csv = new StringBuilder();
             csv.AppendLine("ID;Name;Email;Telefon;Firma;Adresse;Notizen;Erstellungsdatum");
 
-            foreach (var kunde in _kunden)
+            foreach (var kunde in kunden)
             {
                 csv.AppendLine($"{kunde.Id};{EscapeCsv(kunde.Name)};{EscapeCsv(kunde.Email)};{EscapeCsv(kunde.Telefon)};{EscapeCsv(kunde.Firma)};{EscapeCsv(kunde.Adresse)};{EscapeCsv(kunde.Notizen)};{kunde.Erstellungsdatum:yyyy-MM-dd HH:mm:ss}");
             }
 
-            return Task.FromResult(csv.ToString());
+            return csv.ToString();
         }
 
         private string EscapeCsv(string value)
