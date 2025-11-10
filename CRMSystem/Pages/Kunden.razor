@@ -3,6 +3,7 @@
 @using CRMSystem.Models
 @using CRMSystem.Data
 @using System.Text
+@using System.ComponentModel.DataAnnotations
 @inject IKundeService KundeService
 @inject IJSRuntime JSRuntime
 
@@ -56,44 +57,54 @@
         </small>
     </div>
 }
+
 <h3>Neuen Kunden anlegen</h3>
-<div class="row">
-    <div class="col-md-6">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label class="form-label">Name *</label>
-                    <input @bind="neuerKunde.Name" class="form-control" placeholder="Vor- und Nachname" />
+<EditForm Model="neuerKunde" OnValidSubmit="KundeHinzufuegen">
+    <DataAnnotationsValidator />
+    <div class="row">
+        <div class="col-md-6">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Name *</label>
+                        <InputText @bind-Value="neuerKunde.Name" class="form-control" placeholder="Vor- und Nachname" />
+                        <ValidationMessage For="@(() => neuerKunde.Name)" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Email</label>
+                        <InputText @bind-Value="neuerKunde.Email" class="form-control" placeholder="email@beispiel.de" />
+                        <ValidationMessage For="@(() => neuerKunde.Email)" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Telefon</label>
+                        <InputText @bind-Value="neuerKunde.Telefon" class="form-control" placeholder="+49 123 456789" />
+                        <ValidationMessage For="@(() => neuerKunde.Telefon)" />
+                    </div>
                 </div>
-                <div class="form-group mb-3">
-                    <label class="form-label">Email</label>
-                    <input @bind="neuerKunde.Email" class="form-control" placeholder="email@beispiel.de" />
-                </div>
-                <div class="form-group mb-3">
-                    <label class="form-label">Telefon</label>
-                    <input @bind="neuerKunde.Telefon" class="form-control" placeholder="+49 123 456789" />
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Firma</label>
+                        <InputText @bind-Value="neuerKunde.Firma" class="form-control" placeholder="Firmenname" />
+                        <ValidationMessage For="@(() => neuerKunde.Firma)" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Adresse</label>
+                        <InputTextArea @bind-Value="neuerKunde.Adresse" class="form-control" placeholder="Straße, PLZ, Stadt" rows="3" />
+                        <ValidationMessage For="@(() => neuerKunde.Adresse)" />
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label class="form-label">Firma</label>
-                    <input @bind="neuerKunde.Firma" class="form-control" placeholder="Firmenname" />
-                </div>
-                <div class="form-group mb-3">
-                    <label class="form-label">Adresse</label>
-                    <textarea @bind="neuerKunde.Adresse" class="form-control" placeholder="Straße, PLZ, Stadt" rows="3"></textarea>
-                </div>
+            <div class="form-group mb-3">
+                <label class="form-label">Notizen</label>
+                <InputTextArea @bind-Value="neuerKunde.Notizen" class="form-control" placeholder="Interne Notizen..." rows="2" />
+                <ValidationMessage For="@(() => neuerKunde.Notizen)" />
             </div>
+            <button type="submit" class="btn btn-success mt-2">
+                ➕ Kunde hinzufügen
+            </button>
         </div>
-        <div class="form-group mb-3">
-            <label class="form-label">Notizen</label>
-            <textarea @bind="neuerKunde.Notizen" class="form-control" placeholder="Interne Notizen..." rows="2"></textarea>
-        </div>
-        <button @onclick="KundeHinzufuegen" class="btn btn-success mt-2">
-            ➕ Kunde hinzufügen
-        </button>
     </div>
-</div>
+</EditForm>
 
 @if (!string.IsNullOrEmpty(statusMessage))
 {
@@ -243,11 +254,11 @@ else
     </div>
 }
 
+<!-- Navigation -->
 <div class="mt-4">
     <a href="/" class="btn btn-secondary">← Dashboard</a>
     <a href="/aufgaben" class="btn btn-outline-secondary ms-2">📋 Aufgaben</a>
     <a href="/kontakte" class="btn btn-outline-secondary ms-2">📞 Kontakte</a>
-    <span class="text-muted ms-3">Gesamt: @kunden.Count Kunden</span>
 </div>
 
 @code {
@@ -336,12 +347,6 @@ else
 
     private async Task KundeHinzufuegen()
     {
-        if (string.IsNullOrWhiteSpace(neuerKunde.Name))
-        {
-            statusMessage = "⚠️ Bitte geben Sie einen Namen ein!";
-            return;
-        }
-
         neuerKunde.Erstellungsdatum = DateTime.Now;
         await KundeService.AddKundeAsync(neuerKunde);
         statusMessage = $"✅ Kunde '{neuerKunde.Name}' wurde gespeichert!";
