@@ -1,0 +1,153 @@
+﻿@page "/dashboard"
+@using CRMSystem.Services
+@using CRMSystem.Models
+@inject IKundeService KundeService
+
+<PageTitle>CRM Dashboard</PageTitle>
+
+<h1>📊 Dashboard</h1>
+
+<div class="row">
+    <!-- Картка загальної кількості -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>@totalKunden</h4>
+                        <p class="mb-0">Gesamtkunden</p>
+                    </div>
+                    <div class="align-self-center">
+                        <span style="font-size: 2rem;">👥</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Картка останніх доданих -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>@neueKundenDieseWoche</h4>
+                        <p class="mb-0">Diese Woche</p>
+                    </div>
+                    <div class="align-self-center">
+                        <span style="font-size: 2rem;">🆕</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Картка фірм -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>@firmenCount</h4>
+                        <p class="mb-0">Unternehmen</p>
+                    </div>
+                    <div class="align-self-center">
+                        <span style="font-size: 2rem;">🏢</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Картка активності -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>@letzteAktivitat</h4>
+                        <p class="mb-0">Letzte Aktivität</p>
+                    </div>
+                    <div class="align-self-center">
+                        <span style="font-size: 2rem;">📈</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Останні клієнти -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">📋 Letzte Kunden</h5>
+            </div>
+            <div class="card-body">
+                @if (letzteKunden.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Firma</th>
+                                    <th>Kontakt</th>
+                                    <th>Hinzugefügt am</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var kunde in letzteKunden)
+                                {
+                                    <tr>
+                                        <td>@kunde.Name</td>
+                                        <td>@kunde.Firma</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(kunde.Email))
+                                            {
+                                                <div>📧 @kunde.Email</div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(kunde.Telefon))
+                                            {
+                                                <div>📞 @kunde.Telefon</div>
+                                            }
+                                        </td>
+                                        <td>@kunde.Erstellungsdatum.ToString("dd.MM.yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Noch keine Kunden vorhanden.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int totalKunden = 0;
+    private int neueKundenDieseWoche = 0;
+    private int firmenCount = 0;
+    private string letzteAktivitat = "Heute";
+    private List<Kunde> letzteKunden = new List<Kunde>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        var kunden = await KundeService.GetKundenAsync();
+
+        totalKunden = kunden.Count;
+        neueKundenDieseWoche = kunden.Count(k => k.Erstellungsdatum >= DateTime.Now.AddDays(-7));
+        firmenCount = kunden.Select(k => k.Firma).Distinct().Count();
+        letzteKunden = kunden.OrderByDescending(k => k.Erstellungsdatum).Take(5).ToList();
+    }
+}

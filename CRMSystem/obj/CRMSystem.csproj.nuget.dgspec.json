@@ -11,7 +11,7 @@
         "projectName": "CRMSystem",
         "projectPath": "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
         "packagesPath": "C:\\Users\\CC-Student\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\obj\\",
+        "outputPath": "C:\\Users\\CC-Student\\Source\\Repos\\CRMSystem\\CRMSystem\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -69,7 +69,7 @@
             },
             "Microsoft.EntityFrameworkCore.SqlServer": {
               "target": "Package",
-              "version": "[7.0.0, )"
+              "version": "[9.0.10, )"
             },
             "Microsoft.EntityFrameworkCore.Tools": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
