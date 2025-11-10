@@ -73,10 +73,75 @@ else
     </div>
 }
 
+<!-- Modal für neuen Kontakt -->
+@if (neuerKontaktModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Neuen Kontakt erstellen</h5>
+                    <button type="button" class="btn-close" @onclick="NeuenKontaktAbbrechen"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Name *</label>
+                                <input @bind="neuerKontakt.Name" class="form-control" placeholder="Vor- und Nachname" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Position</label>
+                                <input @bind="neuerKontakt.Position" class="form-control" placeholder="Position im Unternehmen" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Email</label>
+                                <input @bind="neuerKontakt.Email" class="form-control" placeholder="email@beispiel.de" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Telefon</label>
+                                <input @bind="neuerKontakt.Telefon" class="form-control" placeholder="+49 123 456789" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Kunde *</label>
+                                <select @bind="neuerKontakt.KundeId" class="form-select">
+                                    <option value="0">-- Kunde auswählen --</option>
+                                    @foreach (var kunde in kunden)
+                                    {
+                                        <option value="@kunde.Id">@kunde.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Notizen</label>
+                        <textarea @bind="neuerKontakt.Notizen" class="form-control" placeholder="Interne Notizen..." rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="NeuenKontaktAbbrechen" class="btn btn-secondary">Abbrechen</button>
+                    <button @onclick="KontaktErstellen" class="btn btn-primary">Erstellen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Navigation -->
+<div class="mt-4">
+    <a href="/" class="btn btn-secondary">← Dashboard</a>
+    <a href="/kunden" class="btn btn-outline-secondary ms-2">👥 Kunden</a>
+    <a href="/aufgaben" class="btn btn-outline-secondary ms-2">📋 Aufgaben</a>
+</div>
+
 @code {
     private List<Kontakt> kontakte = [];
     private List<Kunde> kunden = [];
     private bool neuerKontaktModal = false;
+    private Kontakt neuerKontakt = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -91,12 +156,30 @@ else
 
     private void NeuenKontaktAnzeigen()
     {
-        // Тут буде модальне вікно
+        neuerKontakt = new Kontakt();
+        neuerKontaktModal = true;
+    }
+
+    private void NeuenKontaktAbbrechen()
+    {
+        neuerKontaktModal = false;
+    }
+
+    private async Task KontaktErstellen()
+    {
+        if (string.IsNullOrWhiteSpace(neuerKontakt.Name) || neuerKontakt.KundeId == 0)
+        {
+            return;
+        }
+
+        await KontaktService.AddKontaktAsync(neuerKontakt);
+        neuerKontaktModal = false;
+        await KontakteLaden();
     }
 
     private async Task KontaktBearbeiten(int id)
     {
-        // Тут буде редагування
+        await KontakteLaden();
     }
 
     private async Task KontaktLoeschen(int id)

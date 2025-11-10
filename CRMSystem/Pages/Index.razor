@@ -88,10 +88,13 @@
                 <div class="card-body">
                     <div class="d-grid gap-2 d-md-flex">
                         <a href="/kunden" class="btn btn-primary btn-lg me-2">
-                            ➕ Neuen Kunden anlegen
+                            ➕ Neuen Kunden
                         </a>
-                        <a href="/kunden" class="btn btn-outline-primary btn-lg me-2">
-                            👥 Alle Kunden anzeigen
+                        <a href="/aufgaben" class="btn btn-success btn-lg me-2">
+                            📋 Neue Aufgabe
+                        </a>
+                        <a href="/kontakte" class="btn btn-info btn-lg me-2">
+                            📞 Neuer Kontakt
                         </a>
                         <button class="btn btn-outline-secondary btn-lg" @onclick="StatistikAktualisieren">
                             🔄 Aktualisieren
@@ -152,12 +155,12 @@
 </div>
 
 @code {
-    private List<Kunde> alleKunden = new List<Kunde>();
+    private List<Kunde> alleKunden = [];
     private int kundenCount = 0;
     private int heuteErstellteKunden = 0;
     private int kundenMitFirma = 0;
     private int kundenMitTelefon = 0;
-    private List<Kunde> letzteKunden = new List<Kunde>();
+    private List<Kunde> letzteKunden = [];
 
     protected override async Task OnInitializedAsync()
     {
