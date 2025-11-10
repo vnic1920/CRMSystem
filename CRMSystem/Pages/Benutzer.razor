@@ -1,0 +1,231 @@
+﻿@page "/benutzer"
+@using CRMSystem.Data
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+
+<AuthorizeView Roles="Administrator">
+    <Authorized>
+        <PageTitle>Benutzerverwaltung</PageTitle>
+
+        <h1>👥 Benutzerverwaltung</h1>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <button @onclick="NeuenBenutzerAnzeigen" class="btn btn-primary">
+                    ➕ Neuen Benutzer
+                </button>
+            </div>
+        </div>
+
+        @if (benutzer.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Rolle</th>
+                            <th>Erstellt am</th>
+                            <th>Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in benutzer)
+                        {
+                            <tr>
+                                <td>@user.Vorname @user.Nachname</td>
+                                <td>@user.Email</td>
+                                <td>
+                                    <select value="@userRollen[user.Id]" @onchange="@((ChangeEventArgs e) => RolleAendern(user.Id, e.Value?.ToString()))">
+                                        <option value="Mitarbeiter">Mitarbeiter</option>
+                                        <option value="Manager">Manager</option>
+                                        <option value="Administrator">Administrator</option>
+                                    </select>
+                                </td>
+                                <td>@user.Erstellungsdatum.ToString("dd.MM.yyyy")</td>
+                                <td>
+                                    <button @onclick="() => BenutzerLoeschen(user.Id)"
+                                            class="btn btn-danger btn-sm">
+                                        🗑️ Löschen
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- Modal für neuen Benutzer -->
+        @if (neuerBenutzerModal)
+        {
+            <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Neuen Benutzer erstellen</h5>
+                            <button type="button" class="btn-close" @onclick="NeuenBenutzerAbbrechen"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Vorname</label>
+                                <input @bind="neuerBenutzer.Vorname" class="form-control" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Nachname</label>
+                                <input @bind="neuerBenutzer.Nachname" class="form-control" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Email</label>
+                                <input @bind="neuerBenutzer.Email" class="form-control" type="email" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Passwort</label>
+                                <input @bind="neuerBenutzerPasswort" class="form-control" type="password" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Rolle</label>
+                                <select @bind="neuerBenutzerRolle" class="form-select">
+                                    <option value="Mitarbeiter">Mitarbeiter</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Administrator">Administrator</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button @onclick="NeuenBenutzerAbbrechen" class="btn btn-secondary">Abbrechen</button>
+                            <button @onclick="BenutzerErstellen" class="btn btn-primary">Erstellen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <div class="alert alert-info mt-3">@statusMessage</div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <div class="alert alert-danger">
+            <h4>Zugriff verweigert</h4>
+            <p>Sie haben keine Berechtigung für diese Seite.</p>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<ApplicationUser> benutzer = new();
+    private Dictionary<string, string> userRollen = new();
+    private bool neuerBenutzerModal = false;
+    private ApplicationUser neuerBenutzer = new();
+    private string neuerBenutzerPasswort = string.Empty;
+    private string neuerBenutzerRolle = "Mitarbeiter";
+    private string statusMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await BenutzerLaden();
+    }
+
+    private async Task BenutzerLaden()
+    {
+        benutzer = UserManager.Users.ToList();
+
+        foreach (var user in benutzer)
+        {
+            var rollen = await UserManager.GetRolesAsync(user);
+            userRollen[user.Id] = rollen.FirstOrDefault() ?? "Mitarbeiter";
+        }
+        StateHasChanged();
+    }
+
+    private async Task RolleAendern(string userId, string? neueRolle)
+    {
+        if (string.IsNullOrEmpty(neueRolle)) return;
+
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user != null)
+        {
+            var aktuelleRollen = await UserManager.GetRolesAsync(user);
+            await UserManager.RemoveFromRolesAsync(user, aktuelleRollen);
+            await UserManager.AddToRoleAsync(user, neueRolle);
+            statusMessage = $"✅ Rolle für {user.Email} geändert zu {neueRolle}";
+            await BenutzerLaden();
+        }
+    }
+
+    private void NeuenBenutzerAnzeigen()
+    {
+        neuerBenutzer = new ApplicationUser();
+        neuerBenutzerPasswort = string.Empty;
+        neuerBenutzerRolle = "Mitarbeiter";
+        neuerBenutzerModal = true;
+        StateHasChanged();
+    }
+
+    private void NeuenBenutzerAbbrechen()
+    {
+        neuerBenutzerModal = false;
+        StateHasChanged();
+    }
+
+    private async Task BenutzerErstellen()
+    {
+        if (string.IsNullOrEmpty(neuerBenutzer.Email))
+        {
+            statusMessage = "⚠️ Bitte Email eingeben!";
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrEmpty(neuerBenutzerPasswort))
+        {
+            statusMessage = "⚠️ Bitte Passwort eingeben!";
+            StateHasChanged();
+            return;
+        }
+
+        neuerBenutzer.UserName = neuerBenutzer.Email;
+        var result = await UserManager.CreateAsync(neuerBenutzer, neuerBenutzerPasswort);
+
+        if (result.Succeeded)
+        {
+            await UserManager.AddToRoleAsync(neuerBenutzer, neuerBenutzerRolle);
+            statusMessage = $"✅ Benutzer {neuerBenutzer.Email} erstellt!";
+            neuerBenutzerModal = false;
+            await BenutzerLaden();
+        }
+        else
+        {
+            statusMessage = $"❌ Fehler: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+        }
+        StateHasChanged();
+    }
+
+    private async Task BenutzerLoeschen(string userId)
+    {
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user != null && user.Email != "admin@crm.de") // Admin nicht löschbar
+        {
+            var result = await UserManager.DeleteAsync(user);
+            if (result.Succeeded)
+            {
+                statusMessage = $"✅ Benutzer {user.Email} gelöscht!";
+                await BenutzerLaden();
+            }
+            else
+            {
+                statusMessage = $"❌ Fehler beim Löschen: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+            }
+            StateHasChanged();
+        }
+        else
+        {
+            statusMessage = "❌ Admin-Benutzer kann nicht gelöscht werden!";
+            StateHasChanged();
+        }
+    }
+}

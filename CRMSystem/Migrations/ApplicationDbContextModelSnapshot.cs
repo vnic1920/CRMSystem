@@ -61,7 +61,7 @@ namespace CRMSystem.Migrations
 
                     b.HasIndex("KundeId");
 
-                    b.ToTable("Kontakte");
+                    b.ToTable("Kontakte", (string)null);
                 });
 
             modelBuilder.Entity("CRMSystem.Models.Kunde", b =>
@@ -102,7 +102,7 @@ namespace CRMSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Kunden");
+                    b.ToTable("Kunden", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

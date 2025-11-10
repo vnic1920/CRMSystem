@@ -2,12 +2,47 @@
 
 <div class="page">
     <div class="sidebar">
-        <NavMenu />
+        <div class="top-row px-4 navbar navbar-dark">
+            <a class="navbar-brand" href="/">CRM System</a>
+            <button class="navbar-toggler" @onclick="ToggleNavMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+
+        <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+            <nav class="flex-column">
+                <div class="nav-item px-3">
+                    <a class="nav-link" href="/">
+                        <span class="oi oi-home" aria-hidden="true"></span> Dashboard
+                    </a>
+                </div>
+                <div class="nav-item px-3">
+                    <a class="nav-link" href="/kunden">
+                        <span class="oi oi-people" aria-hidden="true"></span> Kunden
+                    </a>
+                </div>
+                <AuthorizeView Roles="Administrator">
+                    <div class="nav-item px-3">
+                        <a class="nav-link" href="/benutzer">
+                            <span class="oi oi-person" aria-hidden="true"></span> Benutzer
+                        </a>
+                    </div>
+                </AuthorizeView>
+            </nav>
+        </div>
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+        <div class="top-row px-4 auth">
+            <AuthorizeView>
+                <Authorized>
+                    Hallo, @context.User.Identity?.Name!
+                    <a href="/MicrosoftIdentity/Account/SignOut" class="btn btn-link">Logout</a>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="/login">Login</a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
 
         <article class="content px-4">
@@ -15,3 +50,14 @@
         </article>
     </main>
 </div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

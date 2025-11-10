@@ -65,11 +65,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4>@letzteAktivitat</h4>
-                        <p class="mb-0">Letzte Aktivität</p>
+                        <h4>@offeneAufgaben</h4>
+                        <p class="mb-0">Offene Aufgaben</p>
                     </div>
                     <div class="align-self-center">
-                        <span style="font-size: 2rem;">📈</span>
+                        <span style="font-size: 2rem;">📋</span>
                     </div>
                 </div>
             </div>
@@ -133,8 +133,8 @@
     private int totalKunden = 0;
     private int neueKundenDieseWoche = 0;
     private int firmenCount = 0;
-    private string letzteAktivitat = "Heute";
-    private List<Kunde> letzteKunden = new List<Kunde>();
+    private int offeneAufgaben = 5;
+    private List<Kunde> letzteKunden = new();
 
     protected override async Task OnInitializedAsync()
     {
