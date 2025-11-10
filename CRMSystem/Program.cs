@@ -31,8 +31,10 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ApplicationUser>>();
 
 // Custom Services
+// Custom Services
 builder.Services.AddScoped<IKundeService, KundeService>();
 builder.Services.AddScoped<IAufgabeService, AufgabeService>();
+builder.Services.AddScoped<IKontaktService, KontaktService>();
 
 var app = builder.Build();
 

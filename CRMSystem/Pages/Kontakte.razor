@@ -1,0 +1,107 @@
+﻿@page "/kontakte"
+@using CRMSystem.Services
+@using CRMSystem.Models
+@inject IKontaktService KontaktService
+@inject IKundeService KundeService
+
+<PageTitle>Kontakte</PageTitle>
+
+<h1>📞 Kontakte</h1>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <button @onclick="NeuenKontaktAnzeigen" class="btn btn-primary">
+            ➕ Neuer Kontakt
+        </button>
+    </div>
+</div>
+
+@if (kontakte.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>Kontakt</th>
+                    <th>Kunde</th>
+                    <th>Erstellt am</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var kontakt in kontakte)
+                {
+                    <tr>
+                        <td>
+                            <strong>@kontakt.Name</strong>
+                            @if (!string.IsNullOrEmpty(kontakt.Notizen))
+                            {
+                                <br />
+                    
+                                <small class="text-muted">📝 @kontakt.Notizen</small>
+                            }
+                        </td>
+                        <td>@kontakt.Position</td>
+                        <td>
+                            <div>📧 @kontakt.Email</div>
+                            @if (!string.IsNullOrEmpty(kontakt.Telefon))
+                            {
+                                <div>📞 @kontakt.Telefon</div>
+                            }
+                        </td>
+                        <td>@kontakt.Kunde?.Name</td>
+                        <td>
+                            <small class="text-muted">@kontakt.Erstellungsdatum.ToString("dd.MM.yyyy")</small>
+                        </td>
+                        <td>
+                            <button @onclick="(() => KontaktBearbeiten(kontakt.Id))" class="btn btn-sm btn-warning">✏️</button>
+                            <button @onclick="(() => KontaktLoeschen(kontakt.Id))" class="btn btn-sm btn-danger">🗑️</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <h5>Noch keine Kontakte</h5>
+        <p>Fügen Sie Ihren ersten Kontakt hinzu.</p>
+    </div>
+}
+
+@code {
+    private List<Kontakt> kontakte = [];
+    private List<Kunde> kunden = [];
+    private bool neuerKontaktModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await KontakteLaden();
+        kunden = await KundeService.GetKundenAsync();
+    }
+
+    private async Task KontakteLaden()
+    {
+        kontakte = await KontaktService.GetKontakteAsync();
+    }
+
+    private void NeuenKontaktAnzeigen()
+    {
+        // Тут буде модальне вікно
+    }
+
+    private async Task KontaktBearbeiten(int id)
+    {
+        // Тут буде редагування
+    }
+
+    private async Task KontaktLoeschen(int id)
+    {
+        await KontaktService.DeleteKontaktAsync(id);
+        await KontakteLaden();
+    }
+}
