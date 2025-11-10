@@ -73,10 +73,10 @@ namespace CRMSystem.Services
             return csv.ToString();
         }
 
-        private string EscapeCsv(string value)
+        private static string EscapeCsv(string? value)
         {
             if (string.IsNullOrEmpty(value)) return "";
-            if (value.Contains(";") || value.Contains("\"") || value.Contains("\n"))
+            if (value.Contains(';') || value.Contains('"') || value.Contains('\n'))
                 return $"\"{value.Replace("\"", "\"\"")}\"";
             return value;
         }

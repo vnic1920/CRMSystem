@@ -1,15 +1,15 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\CC-Student\\Source\\Repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj": {}
+    "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj": {}
   },
   "projects": {
-    "C:\\Users\\CC-Student\\Source\\Repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj": {
+    "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\CC-Student\\Source\\Repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
+        "projectUniqueName": "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
         "projectName": "CRMSystem",
-        "projectPath": "C:\\Users\\CC-Student\\Source\\Repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
+        "projectPath": "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
         "packagesPath": "C:\\Users\\CC-Student\\.nuget\\packages\\",
         "outputPath": "C:\\Users\\CC-Student\\Source\\Repos\\CRMSystem\\CRMSystem\\obj\\",
         "projectStyle": "PackageReference",

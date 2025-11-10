@@ -17,77 +17,81 @@ build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = CRMSystem
 build_property.RootNamespace = CRMSystem
-build_property.ProjectDir = C:\Users\CC-Student\Source\Repos\CRMSystem\CRMSystem\
+build_property.ProjectDir = C:\Users\CC-Student\source\repos\CRMSystem\CRMSystem\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = C:\Users\CC-Student\Source\Repos\CRMSystem\CRMSystem
+build_property.MSBuildProjectDirectory = C:\Users\CC-Student\source\repos\CRMSystem\CRMSystem
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 8.0
 build_property.EnableCodeStyleSeverity = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/App.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/App.razor]
 build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Pages/Benutzer.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Pages/Aufgaben.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXVmZ2FiZW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Pages/Benutzer.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQmVudXR6ZXIucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Pages/Counter.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ291bnRlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Pages/Dashboard.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Pages/Dashboard.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Pages/FetchData.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Pages/FetchData.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRmV0Y2hEYXRhLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Pages/Index.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Pages/Index.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXgucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Pages/Kunden.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Pages/Kunden.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcS3VuZGVuLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Pages/LoginPage.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Pages/LoginPage.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW5QYWdlLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Shared/MainLayout.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Shared/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE1haW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Shared/NavMenu.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Shared/NavMenu.razor]
 build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE5hdk1lbnUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Shared/SurveyPrompt.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Shared/SurveyPrompt.razor]
 build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXFN1cnZleVByb21wdC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/_Imports.razor]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Areas/Identity/Pages/Account/LogOut.cshtml]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Areas/Identity/Pages/Account/LogOut.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxMb2dPdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Areas/Identity/Pages/Shared/_LoginPartial.cshtml]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Areas/Identity/Pages/Shared/_LoginPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcU2hhcmVkXF9Mb2dpblBhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Pages/Error.cshtml]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Pages/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXJyb3IuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/CC-Student/Source/Repos/CRMSystem/CRMSystem/Pages/_Host.cshtml]
+[C:/Users/CC-Student/source/repos/CRMSystem/CRMSystem/Pages/_Host.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX0hvc3QuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

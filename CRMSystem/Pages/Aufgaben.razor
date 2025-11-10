@@ -1,0 +1,222 @@
+﻿@page "/aufgaben"
+@using CRMSystem.Services
+@using CRMSystem.Models
+@inject IAufgabeService AufgabeService
+@inject IKundeService KundeService
+
+<PageTitle>Aufgaben</PageTitle>
+
+<h1>📋 Aufgaben</h1>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <button @onclick="NeueAufgabeAnzeigen" class="btn btn-primary">
+            ➕ Neue Aufgabe
+        </button>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="badge bg-warning">
+            Heute fällig: @heuteFaellig.Count
+        </div>
+    </div>
+</div>
+
+@if (aufgaben.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Titel</th>
+                    <th>Kunde</th>
+                    <th>Fällig am</th>
+                    <th>Priorität</th>
+                    <th>Status</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var aufgabe in aufgaben)
+                {
+                    <tr>
+                        <td>
+                            <strong>@aufgabe.Titel</strong>
+                            @if (!string.IsNullOrEmpty(aufgabe.Beschreibung))
+                            {
+                                <br />
+                    
+                                <small class="text-muted">@aufgabe.Beschreibung</small>
+                            }
+                        </td>
+                        <td>@(aufgabe.Kunde?.Name ?? "-")</td>
+                        <td>
+                            <span class="@(aufgabe.Fälligkeitsdatum < DateTime.Today ? "text-danger" : "")">
+                                @aufgabe.Fälligkeitsdatum.ToString("dd.MM.yyyy")
+                            </span>
+                        </td>
+                        <td>
+                            @switch (aufgabe.Priorität)
+                            {
+                                case "Hoch":
+                                    <span class="badge bg-danger">🔴 Hoch</span>
+                                    ; break;
+                                case "Mittel":
+
+                                    <span class="badge bg-warning">🟡 Mittel</span>
+                                    ; break;
+                                default:
+
+                                    <span class="badge bg-success">🟢 Niedrig</span>
+                                    ; break;
+                            }
+                        </td>
+                        <td>
+                            <select value="@aufgabe.Status" @onchange="@((ChangeEventArgs e) => StatusAendern(aufgabe, e.Value?.ToString()))" class="form-select form-select-sm">
+                                <option value="Offen">Offen</option>
+                                <option value="In Bearbeitung">In Bearbeitung</option>
+                                <option value="Erledigt">Erledigt</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button @onclick="(() => AufgabeBearbeiten(aufgabe.Id))" class="btn btn-sm btn-warning">✏️</button>
+                            <button @onclick="(() => AufgabeLoeschen(aufgabe.Id))" class="btn btn-sm btn-danger">🗑️</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <h5>Noch keine Aufgaben</h5>
+        <p>Erstellen Sie Ihre erste Aufgabe, um den Überblick zu behalten.</p>
+    </div>
+}
+
+<!-- Modal für neue Aufgabe -->
+@if (neueAufgabeModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Neue Aufgabe erstellen</h5>
+                    <button type="button" class="btn-close" @onclick="NeueAufgabeAbbrechen"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Titel *</label>
+                                <input @bind="neueAufgabe.Titel" class="form-control" placeholder="Aufgabentitel" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Beschreibung</label>
+                                <textarea @bind="neueAufgabe.Beschreibung" class="form-control" rows="3" placeholder="Aufgabenbeschreibung"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Fälligkeitsdatum *</label>
+                                <input type="date" @bind="neueAufgabe.Fälligkeitsdatum" class="form-control" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Priorität</label>
+                                <select @bind="neueAufgabe.Priorität" class="form-select">
+                                    <option value="Niedrig">Niedrig</option>
+                                    <option value="Mittel">Mittel</option>
+                                    <option value="Hoch">Hoch</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="form-label">Kunde</label>
+                                <select @bind="neueAufgabe.KundeId" class="form-select">
+                                    <option value="">-- Kein Kunde --</option>
+                                    @foreach (var kunde in kunden)
+                                    {
+                                        <option value="@kunde.Id">@kunde.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="NeueAufgabeAbbrechen" class="btn btn-secondary">Abbrechen</button>
+                    <button @onclick="AufgabeErstellen" class="btn btn-primary">Erstellen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Aufgabe> aufgaben = [];
+    private List<Aufgabe> heuteFaellig = [];
+    private List<Kunde> kunden = [];
+    private bool neueAufgabeModal = false;
+    private Aufgabe neueAufgabe = new()
+    {
+        Fälligkeitsdatum = DateTime.Today.AddDays(1),
+        Priorität = "Mittel",
+        Status = "Offen"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AufgabenLaden();
+        kunden = await KundeService.GetKundenAsync();
+    }
+
+    private async Task AufgabenLaden()
+    {
+        aufgaben = await AufgabeService.GetAufgabenAsync();
+        heuteFaellig = await AufgabeService.GetHeuteFaelligAsync();
+    }
+
+    private void NeueAufgabeAnzeigen()
+    {
+        neueAufgabeModal = true;
+    }
+
+    private void NeueAufgabeAbbrechen()
+    {
+        neueAufgabeModal = false;
+    }
+
+    private async Task AufgabeErstellen()
+    {
+        if (string.IsNullOrWhiteSpace(neueAufgabe.Titel))
+        {
+            return;
+        }
+
+        await AufgabeService.AddAufgabeAsync(neueAufgabe);
+        neueAufgabeModal = false;
+        await AufgabenLaden();
+    }
+
+    private async Task StatusAendern(Aufgabe aufgabe, string? neuerStatus)
+    {
+        if (!string.IsNullOrEmpty(neuerStatus))
+        {
+            aufgabe.Status = neuerStatus;
+            await AufgabeService.UpdateAufgabeAsync(aufgabe);
+            await AufgabenLaden();
+        }
+    }
+
+    private async Task AufgabeBearbeiten(int id)
+    {
+        // Hier kann Bearbeitungs-Logik implementiert werden
+        await AufgabenLaden();
+    }
+
+    private async Task AufgabeLoeschen(int id)
+    {
+        await AufgabeService.DeleteAufgabeAsync(id);
+        await AufgabenLaden();
+    }
+}

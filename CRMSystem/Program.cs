@@ -1,7 +1,9 @@
-﻿using CRMSystem.Services;
+﻿using CRMSystem.Areas.Identity;
 using CRMSystem.Data;
-using Microsoft.EntityFrameworkCore;
+using CRMSystem.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +26,13 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 // Services
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+
+// Authentication
+builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ApplicationUser>>();
+
+// Custom Services
 builder.Services.AddScoped<IKundeService, KundeService>();
+builder.Services.AddScoped<IAufgabeService, AufgabeService>();
 
 var app = builder.Build();
 
