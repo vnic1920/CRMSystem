@@ -8,43 +8,54 @@
 
 <h1>Kunden Übersicht</h1>
 
-<!-- Suche und Filter -->
+<!-- Erweiterte Suche und Filter -->
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="input-group">
-            <input @bind="suchText" class="form-control" placeholder="Namen oder Email suchen..." />
-            <button @onclick="FilternUndSortieren" class="btn btn-primary" type="button">
-                🔍 Suchen
-            </button>
-            <button @onclick="SuchTextLeeren" class="btn btn-outline-secondary" type="button">
-                ✕ Löschen
+            <input @bind="suchText" @oninput="@((ChangeEventArgs e) => { suchText = e.Value?.ToString() ?? ""; FilternUndSortieren(); })" class="form-control" placeholder="Namen, Email oder Firma suchen..." />
+            <button @onclick="SuchTextLeeren" class="btn btn-outline-secondary" type="button" title="Suche löschen">
+                ✕
             </button>
         </div>
     </div>
     <div class="col-md-3">
-        <select @bind="sortierung" class="form-select">
-            <option value="name">Nach Name</option>
+        <select value="@sortierung" @onchange="@((ChangeEventArgs e) => { sortierung = e.Value?.ToString() ?? "name"; FilternUndSortieren(); })" class="form-select">
+            <option value="name">Nach Name A-Z</option>
+            <option value="namedesc">Nach Name Z-A</option>
             <option value="firma">Nach Firma</option>
-            <option value="datum">Nach Datum</option>
+            <option value="datum">Neueste zuerst</option>
+            <option value="datumalt">Älteste zuerst</option>
         </select>
     </div>
     <div class="col-md-3">
-        <div class="form-text">@gefilterteKunden.Count von @kunden.Count Kunden</div>
+        <select value="@statusFilter" @onchange="@((ChangeEventArgs e) => { statusFilter = e.Value?.ToString() ?? "alle"; FilternUndSortieren(); })" class="form-select">
+            <option value="alle">Alle Kunden</option>
+            <option value="mitFirma">Mit Firma</option>
+            <option value="ohneFirma">Ohne Firma</option>
+            <option value="mitTelefon">Mit Telefon</option>
+            <option value="heute">Heute erstellt</option>
+        </select>
     </div>
 </div>
 
-<!-- Suchstatus -->
-@if (!string.IsNullOrEmpty(suchText))
+<!-- Filter-Status -->
+@if (!string.IsNullOrEmpty(suchText) || statusFilter != "alle")
 {
     <div class="alert alert-light mb-3">
         <small>
-            🔍 Suche nach: "<strong>@suchText</strong>" |
-            Gefunden: <strong>@gefilterteKunden.Count</strong> Kunden
-            <button @onclick="SuchTextLeeren" class="btn btn-sm btn-outline-secondary ms-2">✕</button>
+            @if (!string.IsNullOrEmpty(suchText))
+            {
+                <span>🔍 Suche: "<strong>@suchText</strong>"</span>
+            }
+            @if (statusFilter != "alle")
+            {
+                <span class="ms-2">📊 Filter: <strong>@statusFilter</strong></span>
+            }
+            <span class="ms-2">📈 Gefunden: <strong>@gefilterteKunden.Count</strong> von @kunden.Count Kunden</span>
+            <button @onclick="AlleFilterZuruecksetzen" class="btn btn-sm btn-outline-secondary ms-2">Alle Filter löschen</button>
         </small>
     </div>
 }
-
 <h3>Neuen Kunden anlegen</h3>
 <div class="row">
     <div class="col-md-6">
@@ -240,15 +251,16 @@ else
 </div>
 
 @code {
-    private List<Kunde> kunden = new List<Kunde>();
-    private List<Kunde> gefilterteKunden = new List<Kunde>();
-    private Kunde neuerKunde = new Kunde();
+    private List<Kunde> kunden = [];
+    private List<Kunde> gefilterteKunden = [];
+    private Kunde neuerKunde = new();
     private string statusMessage = "";
     private string suchText = "";
     private string sortierung = "name";
+    private string statusFilter = "alle";
 
     private bool bearbeitenModal = false;
-    private Kunde bearbeitenKunde = new Kunde();
+    private Kunde bearbeitenKunde = new();
 
     private bool loeschenModal = false;
     private Kunde? loeschenKunde;
@@ -268,22 +280,41 @@ else
     {
         var result = kunden;
 
+        // Text-Suche
         if (!string.IsNullOrWhiteSpace(suchText))
         {
             var search = suchText.ToLower();
-            result = kunden.Where(k =>
+            result = result.Where(k =>
                 k.Name.ToLower().Contains(search) ||
-                k.Email.ToLower().Contains(search) ||
-                (k.Firma != null && k.Firma.ToLower().Contains(search))
+                (k.Email != null && k.Email.ToLower().Contains(search)) ||
+                (!string.IsNullOrEmpty(k.Firma) && k.Firma.ToLower().Contains(search)) ||
+                (!string.IsNullOrEmpty(k.Telefon) && k.Telefon.Contains(search))
             ).ToList();
         }
 
-        if (sortierung == "name")
-            result = result.OrderBy(k => k.Name).ToList();
-        else if (sortierung == "firma")
-            result = result.OrderBy(k => k.Firma).ToList();
-        else if (sortierung == "datum")
-            result = result.OrderBy(k => k.Erstellungsdatum).ToList();
+        // Status-Filter
+        if (statusFilter != "alle")
+        {
+            result = statusFilter switch
+            {
+                "mitFirma" => result.Where(k => !string.IsNullOrEmpty(k.Firma)).ToList(),
+                "ohneFirma" => result.Where(k => string.IsNullOrEmpty(k.Firma)).ToList(),
+                "mitTelefon" => result.Where(k => !string.IsNullOrEmpty(k.Telefon)).ToList(),
+                "heute" => result.Where(k => k.Erstellungsdatum.Date == DateTime.Today).ToList(),
+                _ => result
+            };
+        }
+
+        // Sortierung
+        result = sortierung switch
+        {
+            "name" => result.OrderBy(k => k.Name).ToList(),
+            "namedesc" => result.OrderByDescending(k => k.Name).ToList(),
+            "firma" => result.OrderBy(k => k.Firma).ToList(),
+            "datum" => result.OrderByDescending(k => k.Erstellungsdatum).ToList(),
+            "datumalt" => result.OrderBy(k => k.Erstellungsdatum).ToList(),
+            _ => result.OrderBy(k => k.Name).ToList()
+        };
 
         gefilterteKunden = result;
         StateHasChanged();
@@ -292,6 +323,14 @@ else
     private void SuchTextLeeren()
     {
         suchText = "";
+        FilternUndSortieren();
+    }
+
+    private void AlleFilterZuruecksetzen()
+    {
+        suchText = "";
+        statusFilter = "alle";
+        sortierung = "name";
         FilternUndSortieren();
     }
 
@@ -317,15 +356,15 @@ else
         if (kunde != null)
         {
             bearbeitenKunde = new Kunde
-                {
-                    Id = kunde.Id,
-                    Name = kunde.Name,
-                    Email = kunde.Email,
-                    Telefon = kunde.Telefon,
-                    Firma = kunde.Firma,
-                    Adresse = kunde.Adresse,
-                    Notizen = kunde.Notizen
-                };
+            {
+                Id = kunde.Id,
+                Name = kunde.Name,
+                Email = kunde.Email,
+                Telefon = kunde.Telefon,
+                Firma = kunde.Firma,
+                Adresse = kunde.Adresse,
+                Notizen = kunde.Notizen
+            };
             bearbeitenModal = true;
             StateHasChanged();
         }

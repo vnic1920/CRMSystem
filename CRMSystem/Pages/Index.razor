@@ -13,7 +13,7 @@
         </div>
     </div>
 
-    <div class="row mb-5">
+    <div class="row mb-4">
         <div class="col-md-3">
             <div class="card text-white bg-primary">
                 <div class="card-body">
@@ -74,6 +74,79 @@
                             <span style="font-size: 2rem;">📞</span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schnellsuche -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>🔍 Schnellsuche</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <input @bind="suchText" @oninput="Suchen" class="form-control form-control-lg"
+                                       placeholder="Kundenname, Email oder Firma suchen..." />
+                                @if (!string.IsNullOrEmpty(suchText))
+                                {
+                                    <button @onclick="SuchTextLeeren" class="btn btn-outline-secondary" type="button">
+                                        ✕
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-text">
+                                @if (!string.IsNullOrEmpty(suchText))
+                                {
+                                    <span>Gefunden: <strong>@gefundeneKunden.Count</strong> Kunden</span>
+                                }
+                                else
+                                {
+                                    <span>Gesamt: <strong>@kundenCount</strong> Kunden</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Suchergebnisse -->
+                    @if (!string.IsNullOrEmpty(suchText) && gefundeneKunden.Any())
+                    {
+                        <div class="mt-3">
+                            <h6>Suchergebnisse:</h6>
+                            <div class="list-group">
+                                @foreach (var kunde in gefundeneKunden.Take(5))
+                                {
+                                    <a href="/kunden" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">@kunde.Name</h6>
+                                            <small>@kunde.Firma</small>
+                                        </div>
+                                        <p class="mb-1">📧 @kunde.Email</p>
+                                        <small>📞 @kunde.Telefon</small>
+                                    </a>
+                                }
+                                @if (gefundeneKunden.Count > 5)
+                                {
+                                    <div class="list-group-item text-center text-muted">
+                                        ... und @(gefundeneKunden.Count - 5) weitere Ergebnisse
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(suchText) && !gefundeneKunden.Any())
+                    {
+                        <div class="mt-3 alert alert-warning">
+                            Keine Kunden gefunden für "<strong>@suchText</strong>"
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -161,6 +234,8 @@
     private int kundenMitFirma = 0;
     private int kundenMitTelefon = 0;
     private List<Kunde> letzteKunden = [];
+    private string suchText = "";
+    private List<Kunde> gefundeneKunden = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -183,5 +258,31 @@
     private async Task StatistikAktualisieren()
     {
         await StatistikLaden();
+    }
+
+    private void Suchen()
+    {
+        if (string.IsNullOrWhiteSpace(suchText))
+        {
+            gefundeneKunden.Clear();
+            return;
+        }
+
+        var search = suchText.ToLower();
+        gefundeneKunden = alleKunden.Where(k =>
+            k.Name.ToLower().Contains(search) ||
+            (k.Email != null && k.Email.ToLower().Contains(search)) ||
+            (!string.IsNullOrEmpty(k.Firma) && k.Firma.ToLower().Contains(search)) ||
+            (!string.IsNullOrEmpty(k.Telefon) && k.Telefon.Contains(search))
+        ).ToList();
+
+        StateHasChanged();
+    }
+
+    private void SuchTextLeeren()
+    {
+        suchText = "";
+        gefundeneKunden.Clear();
+        StateHasChanged();
     }
 }
