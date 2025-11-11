@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "wZpeMW/RK6Q=",
+  "dgSpecHash": "wVQMF5Bui1Y=",
   "success": true,
   "projectFilePath": "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
   "expectedPackageFiles": [
@@ -94,5 +94,15 @@
     "C:\\Users\\CC-Student\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512",
     "C:\\Users\\CC-Student\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1900",
+      "level": "Warning",
+      "message": "Fehler beim Abrufen von Paketsicherheitsrisikodaten: Der Dienstindex für die Quelle \"https://api.nuget.org/v3/index.json\" konnte nicht geladen werden.",
+      "projectPath": "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
+      "targetGraphs": []
+    }
+  ]
 }

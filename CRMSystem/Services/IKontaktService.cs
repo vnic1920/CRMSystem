@@ -10,5 +10,7 @@ namespace CRMSystem.Services
         Task AddKontaktAsync(Kontakt kontakt);
         Task UpdateKontaktAsync(Kontakt kontakt);
         Task DeleteKontaktAsync(int id);
+        Task<int> GetKontakteCountAsync();
+        Task<List<Kontakt>> SearchKontakteAsync(string searchTerm);
     }
 }

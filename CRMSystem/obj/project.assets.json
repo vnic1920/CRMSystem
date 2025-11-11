@@ -5204,11 +5204,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\CC-Student\\Source\\Repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
+      "projectUniqueName": "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
       "projectName": "CRMSystem",
-      "projectPath": "C:\\Users\\CC-Student\\Source\\Repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
+      "projectPath": "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\CRMSystem.csproj",
       "packagesPath": "C:\\Users\\CC-Student\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\CC-Student\\Source\\Repos\\CRMSystem\\CRMSystem\\obj\\",
+      "outputPath": "C:\\Users\\CC-Student\\source\\repos\\CRMSystem\\CRMSystem\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -5297,5 +5297,13 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1900",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Fehler beim Abrufen von Paketsicherheitsrisikodaten: Der Dienstindex für die Quelle \"https://api.nuget.org/v3/index.json\" konnte nicht geladen werden."
+    }
+  ]
 }
