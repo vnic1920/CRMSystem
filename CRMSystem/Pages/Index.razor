@@ -2,224 +2,286 @@
 @using CRMSystem.Services
 @using CRMSystem.Models
 @inject IKundeService KundeService
+@inject IAufgabeService AufgabeService
+@inject IKontaktService KontaktService
 
-<PageTitle>CRM System Dashboard</PageTitle>
+<PageTitle>Dashboard - CRM System</PageTitle>
 
 <div class="container-fluid">
+    <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="display-4">🏢 CRM System Dashboard</h1>
-            <p class="lead">Willkommen in Ihrem Kundenmanagement-System</p>
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">@kundenCount</h4>
-                            <p class="card-text">Gesamtkunden</p>
-                        </div>
-                        <div class="align-self-center">
-                            <span style="font-size: 2rem;">👥</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">@heuteErstellteKunden</h4>
-                            <p class="card-text">Heute hinzugefügt</p>
-                        </div>
-                        <div class="align-self-center">
-                            <span style="font-size: 2rem;">🆕</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">@kundenMitFirma</h4>
-                            <p class="card-text">Mit Firma</p>
-                        </div>
-                        <div class="align-self-center">
-                            <span style="font-size: 2rem;">🏢</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">@kundenMitTelefon</h4>
-                            <p class="card-text">Mit Telefon</p>
-                        </div>
-                        <div class="align-self-center">
-                            <span style="font-size: 2rem;">📞</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="jumbotron bg-light p-5 rounded">
+                <h1 class="display-4">🏢 CRM System Dashboard</h1>
+                <p class="lead">Willkommen in Ihrem professionellen Kundenmanagement-System</p>
+                <hr class="my-4">
+                <p class="text-muted">Verwalten Sie Kunden, Kontakte und Aufgaben effizient an einem Ort.</p>
             </div>
         </div>
     </div>
 
-    <!-- Schnellsuche -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>🔍 Schnellsuche</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="input-group">
-                                <input @bind="suchText" @oninput="Suchen" class="form-control form-control-lg"
-                                       placeholder="Kundenname, Email oder Firma suchen..." />
-                                @if (!string.IsNullOrEmpty(suchText))
-                                {
-                                    <button @onclick="SuchTextLeeren" class="btn btn-outline-secondary" type="button">
-                                        ✕
-                                    </button>
-                                }
+    <!-- Loading Indicator -->
+    @if (isLoading)
+    {
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Laden...</span>
+            </div>
+            <p class="mt-3 text-muted">Dashboard wird geladen...</p>
+        </div>
+    }
+    else
+    {
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <!-- Kunden Statistik -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-start-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Gesamtkunden
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@kundenStatistik.Gesamt</div>
+                                <div class="mt-2">
+                                    <small class="text-success">
+                                        <i class="bi bi-arrow-up"></i> @kundenStatistik.HeuteErstellt heute
+                                    </small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-text">
-                                @if (!string.IsNullOrEmpty(suchText))
-                                {
-                                    <span>Gefunden: <strong>@gefundeneKunden.Count</strong> Kunden</span>
-                                }
-                                else
-                                {
-                                    <span>Gesamt: <strong>@kundenCount</strong> Kunden</span>
-                                }
+                            <div class="col-auto">
+                                <i class="bi bi-people fa-2x text-gray-300"></i>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Suchergebnisse -->
-                    @if (!string.IsNullOrEmpty(suchText) && gefundeneKunden.Any())
-                    {
-                        <div class="mt-3">
-                            <h6>Suchergebnisse:</h6>
-                            <div class="list-group">
-                                @foreach (var kunde in gefundeneKunden.Take(5))
-                                {
-                                    <a href="/kunden" class="list-group-item list-group-item-action">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1">@kunde.Name</h6>
-                                            <small>@kunde.Firma</small>
+            <!-- Kontakte Statistik -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-start-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Gesamtkontakte
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@kontakteStatistik.Gesamt</div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        📧 @kontakteStatistik.MitEmail mit Email
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-telephone fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aufgaben Statistik -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-start-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Aufgaben
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@aufgabenStatistik.Gesamt</div>
+                                <div class="mt-2">
+                                    <small class="text-danger">
+                                        ⚠️ @aufgabenStatistik.HeuteFaellig heute fällig
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aktivitäts Statistik -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-start-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Aktivität
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@aktivitaetsStatistik</div>
+                                <div class="mt-2">
+                                    <small class="text-primary">
+                                        📈 Letzte 7 Tage
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-activity fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">🚀 Schnellaktionen</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-lg-4 col-md-6">
+                                <a href="/kunden" class="card card-hover text-decoration-none">
+                                    <div class="card-body text-center">
+                                        <div class="text-primary mb-2">
+                                            <i class="bi bi-person-plus" style="font-size: 2rem;"></i>
                                         </div>
-                                        <p class="mb-1">📧 @kunde.Email</p>
-                                        <small>📞 @kunde.Telefon</small>
-                                    </a>
-                                }
-                                @if (gefundeneKunden.Count > 5)
+                                        <h6 class="card-title">Neuen Kunden</h6>
+                                        <p class="text-muted small">Kundenstamm erweitern</p>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-lg-4 col-md-6">
+                                <a href="/aufgaben" class="card card-hover text-decoration-none">
+                                    <div class="card-body text-center">
+                                        <div class="text-success mb-2">
+                                            <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                                        </div>
+                                        <h6 class="card-title">Neue Aufgabe</h6>
+                                        <p class="text-muted small">Aufgabe erstellen</p>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-lg-4 col-md-6">
+                                <a href="/kontakte" class="card card-hover text-decoration-none">
+                                    <div class="card-body text-center">
+                                        <div class="text-info mb-2">
+                                            <i class="bi bi-telephone" style="font-size: 2rem;"></i>
+                                        </div>
+                                        <h6 class="card-title">Neuer Kontakt</h6>
+                                        <p class="text-muted small">Kontakt hinzufügen</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Recent Activity -->
+        <div class="row">
+            <!-- Quick Search -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">🔍 Schnellsuche</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input @bind="suchText" @oninput="Suchen" class="form-control"
+                                   placeholder="Kunden, Kontakte oder Aufgaben suchen..." />
+                            @if (!string.IsNullOrEmpty(suchText))
+                            {
+                                <button @onclick="SuchTextLeeren" class="btn btn-outline-secondary" type="button">
+                                    ✕
+                                </button>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(suchText) && (suchergebnisseKunden.Any() || suchergebnisseKontakte.Any()))
+                        {
+                            <div class="mt-3">
+                                <h6>Suchergebnisse:</h6>
+
+                                @if (suchergebnisseKunden.Any())
                                 {
-                                    <div class="list-group-item text-center text-muted">
-                                        ... und @(gefundeneKunden.Count - 5) weitere Ergebnisse
+                                    <div class="mb-3">
+                                        <small class="text-muted">Kunden (@suchergebnisseKunden.Count)</small>
+                                        <div class="list-group mt-1">
+                                            @foreach (var kunde in suchergebnisseKunden.Take(3))
+                                            {
+                                                <a href="/kunden" class="list-group-item list-group-item-action small">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <strong>@kunde.Name</strong>
+                                                        <small>@kunde.Firma</small>
+                                                    </div>
+                                                    <small class="text-muted">📧 @kunde.Email</small>
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (suchergebnisseKontakte.Any())
+                                {
+                                    <div>
+                                        <small class="text-muted">Kontakte (@suchergebnisseKontakte.Count)</small>
+                                        <div class="list-group mt-1">
+                                            @foreach (var kontakt in suchergebnisseKontakte.Take(3))
+                                            {
+                                                <a href="/kontakte" class="list-group-item list-group-item-action small">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <strong>@kontakt.Name</strong>
+                                                        <small>@kontakt.Position</small>
+                                                    </div>
+                                                    <small class="text-muted">👥 @kontakt.Kunde?.Name</small>
+                                                </a>
+                                            }
+                                        </div>
                                     </div>
                                 }
                             </div>
-                        </div>
-                    }
-
-                    @if (!string.IsNullOrEmpty(suchText) && !gefundeneKunden.Any())
-                    {
-                        <div class="mt-3 alert alert-warning">
-                            Keine Kunden gefunden für "<strong>@suchText</strong>"
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>🚀 Schnellaktionen</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2 d-md-flex">
-                        <a href="/kunden" class="btn btn-primary btn-lg me-2">
-                            ➕ Neuen Kunden
-                        </a>
-                        <a href="/aufgaben" class="btn btn-success btn-lg me-2">
-                            📋 Neue Aufgabe
-                        </a>
-                        <a href="/kontakte" class="btn btn-info btn-lg me-2">
-                            📞 Neuer Kontakt
-                        </a>
-                        <button class="btn btn-outline-secondary btn-lg" @onclick="StatistikAktualisieren">
-                            🔄 Aktualisieren
-                        </button>
+                        }
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    @if (letzteKunden.Any())
-    {
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>📋 Letzte Kunden</h5>
+            <!-- Recent Kunden -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">📋 Letzte Kunden</h5>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Firma</th>
-                                        <th>Erstellt am</th>
-                                        <th>Aktion</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var kunde in letzteKunden)
-                                    {
-                                        <tr>
-                                            <td>@kunde.Name</td>
-                                            <td>@kunde.Email</td>
-                                            <td>@kunde.Firma</td>
-                                            <td>
-                                                <small class="text-muted">
-                                                    @kunde.Erstellungsdatum.ToString("dd.MM.yyyy HH:mm")
-                                                </small>
-                                            </td>
-                                            <td>
-                                                <a href="/kunden" class="btn btn-sm btn-outline-primary">
-                                                    Bearbeiten
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                        @if (letzteKunden.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var kunde in letzteKunden)
+                                {
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">@kunde.Name</h6>
+                                            <small class="text-muted">
+                                                📧 @kunde.Email · 🏢 @kunde.Firma
+                                            </small>
+                                        </div>
+                                        <small class="text-muted">@kunde.Erstellungsdatum.ToString("dd.MM.yy")</small>
+                                    </div>
+                                }
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="/kunden" class="btn btn-outline-primary btn-sm">Alle Kunden anzeigen</a>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-people" style="font-size: 2rem;"></i>
+                                <p class="mt-2">Noch keine Kunden vorhanden</p>
+                                <a href="/kunden" class="btn btn-primary btn-sm">Ersten Kunden anlegen</a>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -228,52 +290,123 @@
 </div>
 
 @code {
+    // Statistik Klassen
+    private class KundenStatistik
+    {
+        public int Gesamt { get; set; }
+        public int HeuteErstellt { get; set; }
+        public int MitFirma { get; set; }
+        public int MitTelefon { get; set; }
+    }
+
+    private class KontakteStatistik
+    {
+        public int Gesamt { get; set; }
+        public int MitEmail { get; set; }
+        public int MitTelefon { get; set; }
+    }
+
+    private class AufgabenStatistik
+    {
+        public int Gesamt { get; set; }
+        public int HeuteFaellig { get; set; }
+        public int Offen { get; set; }
+        public int Erledigt { get; set; }
+    }
+
+    // Variablen
+    private KundenStatistik kundenStatistik = new();
+    private KontakteStatistik kontakteStatistik = new();
+    private AufgabenStatistik aufgabenStatistik = new();
+    private string aktivitaetsStatistik = "0";
     private List<Kunde> alleKunden = [];
-    private int kundenCount = 0;
-    private int heuteErstellteKunden = 0;
-    private int kundenMitFirma = 0;
-    private int kundenMitTelefon = 0;
+    private List<Kontakt> alleKontakte = [];
     private List<Kunde> letzteKunden = [];
     private string suchText = "";
-    private List<Kunde> gefundeneKunden = [];
+    private bool isLoading = false;
+    private List<Kunde> suchergebnisseKunden = [];
+    private List<Kontakt> suchergebnisseKontakte = [];
 
     protected override async Task OnInitializedAsync()
     {
-        await StatistikLaden();
+        await LoadDashboardData();
     }
 
-    private async Task StatistikLaden()
+    private async Task LoadDashboardData()
     {
-        alleKunden = await KundeService.GetKundenAsync();
-
-        kundenCount = alleKunden.Count;
-        heuteErstellteKunden = alleKunden.Count(k => k.Erstellungsdatum.Date == DateTime.Today);
-        kundenMitFirma = alleKunden.Count(k => !string.IsNullOrEmpty(k.Firma));
-        kundenMitTelefon = alleKunden.Count(k => !string.IsNullOrEmpty(k.Telefon));
-        letzteKunden = alleKunden.OrderByDescending(k => k.Erstellungsdatum).Take(5).ToList();
-
+        isLoading = true;
         StateHasChanged();
-    }
 
-    private async Task StatistikAktualisieren()
-    {
-        await StatistikLaden();
+        try
+        {
+            // Paralleles Laden der Daten
+            var kundenTask = KundeService.GetKundenAsync();
+            var kontakteTask = KontaktService.GetKontakteAsync();
+            var aufgabenTask = AufgabeService.GetAufgabenAsync();
+
+            await Task.WhenAll(kundenTask, kontakteTask, aufgabenTask);
+
+            alleKunden = await kundenTask;
+            alleKontakte = await kontakteTask;
+            var aufgaben = await aufgabenTask;
+
+            // Kunden Statistik
+            kundenStatistik.Gesamt = alleKunden.Count;
+            kundenStatistik.HeuteErstellt = alleKunden.Count(k => k.Erstellungsdatum.Date == DateTime.Today);
+            kundenStatistik.MitFirma = alleKunden.Count(k => !string.IsNullOrEmpty(k.Firma));
+            kundenStatistik.MitTelefon = alleKunden.Count(k => !string.IsNullOrEmpty(k.Telefon));
+
+            // Kontakte Statistik
+            kontakteStatistik.Gesamt = alleKontakte.Count;
+            kontakteStatistik.MitEmail = alleKontakte.Count(k => !string.IsNullOrEmpty(k.Email));
+            kontakteStatistik.MitTelefon = alleKontakte.Count(k => !string.IsNullOrEmpty(k.Telefon));
+
+            // Aufgaben Statistik
+            aufgabenStatistik.Gesamt = aufgaben.Count;
+            aufgabenStatistik.HeuteFaellig = aufgaben.Count(a => a.Fälligkeitsdatum.Date == DateTime.Today && a.Status != "Erledigt");
+            aufgabenStatistik.Offen = aufgaben.Count(a => a.Status == "Offen");
+            aufgabenStatistik.Erledigt = aufgaben.Count(a => a.Status == "Erledigt");
+
+            // Aktivitäts Statistik (vereinfacht)
+            aktivitaetsStatistik = (kundenStatistik.HeuteErstellt + aufgabenStatistik.HeuteFaellig).ToString();
+
+            // Letzte Kunden
+            letzteKunden = alleKunden.OrderByDescending(k => k.Erstellungsdatum).Take(5).ToList();
+        }
+        catch (Exception ex)
+        {
+            // Fehlerbehandlung
+            Console.WriteLine($"Fehler beim Laden der Dashboard-Daten: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private void Suchen()
     {
         if (string.IsNullOrWhiteSpace(suchText))
         {
-            gefundeneKunden.Clear();
+            suchergebnisseKunden.Clear();
+            suchergebnisseKontakte.Clear();
             return;
         }
 
         var search = suchText.ToLower();
-        gefundeneKunden = alleKunden.Where(k =>
+
+        suchergebnisseKunden = alleKunden.Where(k =>
             k.Name.ToLower().Contains(search) ||
             (k.Email != null && k.Email.ToLower().Contains(search)) ||
-            (!string.IsNullOrEmpty(k.Firma) && k.Firma.ToLower().Contains(search)) ||
-            (!string.IsNullOrEmpty(k.Telefon) && k.Telefon.Contains(search))
+            (!string.IsNullOrEmpty(k.Firma) && k.Firma.ToLower().Contains(search))
+        ).ToList();
+
+        suchergebnisseKontakte = alleKontakte.Where(k =>
+            k.Name.ToLower().Contains(search) ||
+            (k.Email != null && k.Email.ToLower().Contains(search)) ||
+            (k.Position != null && k.Position.ToLower().Contains(search)) ||
+            (k.Kunde != null && k.Kunde.Name.ToLower().Contains(search))
         ).ToList();
 
         StateHasChanged();
@@ -282,7 +415,8 @@
     private void SuchTextLeeren()
     {
         suchText = "";
-        gefundeneKunden.Clear();
+        suchergebnisseKunden.Clear();
+        suchergebnisseKontakte.Clear();
         StateHasChanged();
     }
 }
