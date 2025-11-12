@@ -118,6 +118,98 @@ namespace CRMSystem.Services
             }
         }
 
+        // 👇 НОВИЙ МЕТОД ДЛЯ ІМПОРТУ
+        public async Task<List<string>> ImportKundenFromCsvAsync(string csvData)
+        {
+            var results = new List<string>();
+            var lines = csvData.Split('\n').Where(line => !string.IsNullOrWhiteSpace(line)).ToArray();
+
+            if (lines.Length < 2)
+            {
+                results.Add("❌ CSV-Datei ist leer oder ungültig");
+                return results;
+            }
+
+            int successCount = 0;
+            int errorCount = 0;
+
+            for (int i = 1; i < lines.Length; i++) // Skip header
+            {
+                try
+                {
+                    var fields = ParseCsvLine(lines[i]);
+
+                    if (fields.Length >= 2) // At least Name
+                    {
+                        var kunde = new Kunde
+                        {
+                            Name = fields[1]?.Trim() ?? "",
+                            Email = fields.Length > 2 ? fields[2]?.Trim() : null,
+                            Telefon = fields.Length > 3 ? fields[3]?.Trim() : null,
+                            Firma = fields.Length > 4 ? fields[4]?.Trim() : null,
+                            Adresse = fields.Length > 5 ? fields[5]?.Trim() : null,
+                            Notizen = fields.Length > 6 ? fields[6]?.Trim() : null,
+                            Erstellungsdatum = DateTime.Now
+                        };
+
+                        if (!string.IsNullOrEmpty(kunde.Name))
+                        {
+                            _context.Kunden.Add(kunde);
+                            successCount++;
+                            results.Add($"✅ {kunde.Name} importiert");
+                        }
+                        else
+                        {
+                            errorCount++;
+                            results.Add($"❌ Zeile {i + 1}: Name fehlt");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorCount++;
+                    results.Add($"❌ Fehler in Zeile {i + 1}: {ex.Message}");
+                }
+            }
+
+            if (successCount > 0)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            results.Add($"");
+            results.Add($"📊 Zusammenfassung: {successCount} erfolgreich, {errorCount} Fehler");
+
+            return results;
+        }
+
+        private string[] ParseCsvLine(string line)
+        {
+            var result = new List<string>();
+            var inQuotes = false;
+            var currentField = "";
+
+            foreach (var c in line)
+            {
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                }
+                else if (c == ';' && !inQuotes)
+                {
+                    result.Add(currentField);
+                    currentField = "";
+                }
+                else
+                {
+                    currentField += c;
+                }
+            }
+
+            result.Add(currentField);
+            return result.ToArray();
+        }
+
         private static string EscapeCsv(string? value)
         {
             if (string.IsNullOrEmpty(value)) return "";

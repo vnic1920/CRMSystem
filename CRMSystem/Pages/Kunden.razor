@@ -172,8 +172,12 @@ else
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>📋 Kundenliste</h3>
         <div class="d-flex gap-2">
+            <!-- 👇 ОНОВЛЕНІ КНОПКИ -->
             <button @onclick="Exportieren" class="btn btn-success" title="Daten exportieren">
                 📤 CSV Export
+            </button>
+            <button @onclick="ImportDialogAnzeigen" class="btn btn-warning" title="Daten importieren">
+                📥 CSV Import
             </button>
             <button @onclick="LoadKunden" class="btn btn-outline-primary" title="Aktualisieren">
                 🔄 Aktualisieren
@@ -297,6 +301,63 @@ else
         </div>
     }
 
+    <!-- 👇 НОВИЙ MODAL ДЛЯ ІМПОРТУ -->
+    @if (importModal)
+    {
+        <div class="modal show d-block" style="background: rgba(0,0,0,0.5);" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">📥 Kunden importieren</h5>
+                        <button type="button" class="btn-close" @onclick="ImportAbbrechen"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <h6>📋 CSV Format:</h6>
+                            <small>
+                                Erwartetes Format: <strong>ID;Name;Email;Telefon;Firma;Adresse;Notizen</strong><br />
+                                Die erste Zeile (Header) wird übersprungen.<br />
+                                Beispiel-Daten sind bereits eingefügt.
+                            </small>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">CSV-Daten einfügen:</label>
+                            <textarea @bind="csvImportDaten" class="form-control" rows="10"
+                                      placeholder="ID;Name;Email;Telefon;Firma;Adresse;Notizen&#10;1;Max Mustermann;max@example.com;+49123456789;Muster GmbH;Musterstraße 1, 12345 Berlin;Notizen..."></textarea>
+                        </div>
+
+                        @if (importResults.Any())
+                        {
+                            <div class="alert @(importResults.Any(r => r.Contains("❌")) ? "alert-danger" : "alert-success")">
+                                <h6>Import Ergebnisse:</h6>
+                                <div style="max-height: 200px; overflow-y: auto;">
+                                    @foreach (var result in importResults)
+                                    {
+                                        <div>@result</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button @onclick="ImportAbbrechen" class="btn btn-secondary">❌ Abbrechen</button>
+                        <button @onclick="KundenImportieren" class="btn btn-warning" disabled="@isImporting">
+                            @if (isImporting)
+                            {
+                                <span>🔄 Importiere...</span>
+                            }
+                            else
+                            {
+                                <span>📥 Import starten</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <!-- Bearbeiten Modal -->
     @if (bearbeitenModal)
     {
@@ -408,6 +469,12 @@ else
 
     private bool loeschenModal = false;
     private Kunde? loeschenKunde;
+
+    // 👇 НОВІ ЗМІННІ ДЛЯ ІМПОРТУ
+    private bool importModal = false;
+    private string csvImportDaten = "";
+    private List<string> importResults = [];
+    private bool isImporting = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -620,6 +687,55 @@ else
         StateHasChanged();
     }
 
+    // 👇 НОВІ МЕТОДИ ДЛЯ ІМПОРТУ
+    private void ImportDialogAnzeigen()
+    {
+        importModal = true;
+        csvImportDaten = "ID;Name;Email;Telefon;Firma;Adresse;Notizen\n1;Max Mustermann;max@example.com;+49123456789;Muster GmbH;Musterstraße 1, 12345 Berlin;Notizen...\n2;Maria Schmidt;maria@example.com;+49123456780;Schmidt AG;Hauptstraße 15, 10115 Berlin;Wichtiger Kunde";
+        importResults.Clear();
+        StateHasChanged();
+    }
+
+    private void ImportAbbrechen()
+    {
+        importModal = false;
+        csvImportDaten = "";
+        importResults.Clear();
+        StateHasChanged();
+    }
+
+    private async Task KundenImportieren()
+    {
+        if (string.IsNullOrWhiteSpace(csvImportDaten))
+        {
+            importResults.Add("❌ Bitte CSV-Daten eingeben");
+            StateHasChanged();
+            return;
+        }
+
+        isImporting = true;
+        importResults.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var results = await KundeService.ImportKundenFromCsvAsync(csvImportDaten);
+            importResults = results;
+
+            // Nach Import Daten aktualisieren
+            await LoadKunden();
+        }
+        catch (Exception ex)
+        {
+            importResults.Add($"❌ Import fehlgeschlagen: {ex.Message}");
+        }
+        finally
+        {
+            isImporting = false;
+            StateHasChanged();
+        }
+    }
+
     private async Task DownloadFile(string content, string fileName, string contentType)
     {
         var bytes = Encoding.UTF8.GetBytes(content);
@@ -632,3 +748,4 @@ else
         await JSRuntime.InvokeVoidAsync("eval", "document.querySelector('form').scrollIntoView({ behavior: 'smooth' })");
     }
 }
+        await LoadKunden();
