@@ -1,0 +1,101 @@
+﻿@page "/login"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using CRMSystem.Data
+@inject NavigationManager Navigation
+@inject SignInManager<ApplicationUser> SignInManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Login - CRM System</PageTitle>
+
+<div class="container-fluid vh-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="card shadow-lg" style="width: 100%; max-width: 400px;">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <h2 class="card-title">🔐 CRM System</h2>
+                <p class="text-muted">Please sign in to continue</p>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input @bind="email" class="form-control" placeholder="admin@crm.de" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" @bind="password" class="form-control" placeholder="Admin123!" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <button @onclick="HandleLogin" class="btn btn-primary w-100 mb-3" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    <span> Signing in...</span>
+                }
+                else
+                {
+                    <span>Sign in</span>
+                }
+            </button>
+
+            <div class="text-center">
+                <small class="text-muted">Demo Accounts:</small><br>
+                <small class="text-muted">Admin: admin@crm.de / Admin123!</small><br>
+                <small class="text-muted">Mitarbeiter: mitarbeiter@crm.de / Mitarbeiter123!</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string email = "admin@crm.de";
+    private string password = "Admin123!";
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if user is already authenticated
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            Navigation.NavigateTo("/", true);
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            var result = await SignInManager.PasswordSignInAsync(email, password, false, false);
+
+            if (result.Succeeded)
+            {
+                Navigation.NavigateTo("/", true);
+            }
+            else
+            {
+                errorMessage = "Invalid login attempt. Please check your credentials.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred during login.";
+            Console.WriteLine($"Login error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

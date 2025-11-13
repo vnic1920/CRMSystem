@@ -1,41 +1,150 @@
 ﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using CRMSystem.Data
+@inject NavigationManager Navigation
+@inject SignInManager<ApplicationUser> SignInManager
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 bg-dark text-white min-vh-100">
-            <div class="p-3">
-                <h5 class="text-white mb-4">CRM System</h5>
-                <ul class="nav nav-pills flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="/">
+<AuthorizeView Context="mainContext">
+    <Authorized Context="authContext">
+        <div class="container-fluid p-0">
+            <div class="sidebar">
+                <div class="navbar-brand">
+                    🏢 CRM System
+                </div>
+
+                <nav class="nav flex-column">
+                    <div class="nav-item">
+                        <a class="nav-link @GetNavLinkClass("/")" href="/">
                             📊 Dashboard
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="/kunden">
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link @GetNavLinkClass("/kunden")" href="/kunden">
                             👥 Kunden
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="/aufgaben">
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link @GetNavLinkClass("/kontakte")" href="/kontakte">
+                            📞 Kontakte
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link @GetNavLinkClass("/aufgaben")" href="/aufgaben">
                             📋 Aufgaben
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="/benutzer">
-                            👤 Benutzer
-                        </a>
-                    </li>
-                </ul>
+                    </div>
+                    <AuthorizeView Roles="Administrator" Context="adminContext">
+                        <Authorized Context="adminAuthContext">
+                            <div class="nav-item">
+                                <a class="nav-link @GetNavLinkClass("/benutzer")" href="/benutzer">
+                                    👤 Benutzer
+                                </a>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+                </nav>
             </div>
-        </div>
 
-        <!-- Main content -->
-        <div class="col-md-9 col-lg-10">
-            <div class="p-4">
-                @Body
+            <div class="main-content">
+                <div class="top-auth-bar d-flex justify-content-end">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            👋 @authContext.User.Identity?.Name
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <button class="dropdown-item" @onclick="Logout">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="content p-4">
+                    @Body
+                </div>
             </div>
         </div>
-    </div>
-</div>
+    </Authorized>
+    <NotAuthorized Context="notAuthContext">
+        <div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
+            <div class="text-center">
+                <h2>🔐 Authentication Required</h2>
+                <p class="text-muted mb-4">Please log in to access the CRM System</p>
+                <a href="/loginpage" class="btn btn-primary btn-lg">Go to Login</a>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private string GetNavLinkClass(string path)
+    {
+        return "";
+    }
+
+    private async Task Logout()
+    {
+        await SignInManager.SignOutAsync();
+        Navigation.NavigateTo("/loginpage", true);
+    }
+}
+
+<style>
+    .sidebar {
+        background-color: #212529;
+        color: white;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 250px;
+        padding: 0;
+    }
+
+    .main-content {
+        margin-left: 250px;
+        padding: 20px;
+        min-height: 100vh;
+        background-color: #f8f9fa;
+    }
+
+    .navbar-brand {
+        padding: 1rem;
+        font-weight: bold;
+        border-bottom: 1px solid #495057;
+        display: block;
+        color: white;
+        text-decoration: none;
+    }
+
+    .nav-item {
+        width: 100%;
+    }
+
+    .nav-link {
+        color: #adb5bd;
+        padding: 0.75rem 1rem;
+        border-radius: 0;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: block;
+    }
+
+        .nav-link:hover {
+            color: white;
+            background-color: #495057;
+        }
+
+        .nav-link.active {
+            color: white;
+            background-color: #0d6efd;
+        }
+
+    .top-auth-bar {
+        background-color: #343a40;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid #495057;
+    }
+</style>

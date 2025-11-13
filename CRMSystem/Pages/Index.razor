@@ -12,13 +12,28 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="jumbotron bg-light p-5 rounded">
-                <h1 class="display-4">🏢 CRM System Dashboard</h1>
-                <p class="lead">Willkommen in Ihrem professionellen Kundenmanagement-System</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-4">🏢 CRM System Dashboard</h1>
+                        <p class="lead">Willkommen in Ihrem professionellen Kundenmanagement-System</p>
+                    </div>
+                    <button @onclick="RefreshData" class="btn btn-primary btn-lg">
+                        🔄 Aktualisieren
+                    </button>
+                </div>
                 <hr class="my-4">
                 <p class="text-muted">Verwalten Sie Kunden, Kontakte und Aufgaben effizient an einem Ort.</p>
             </div>
         </div>
     </div>
+
+    <!-- Debug Info -->
+    @if (!isLoading && alleKunden.Count > 0)
+    {
+        <div class="alert alert-info">
+            <small>📊 Debug: @alleKunden.Count Kunden in Datenbank | Heute erstellt: @kundenStatistik.HeuteErstellt</small>
+        </div>
+    }
 
     <!-- Loading Indicator -->
     @if (isLoading)
@@ -46,7 +61,7 @@
                                 <div class="h5 mb-0 font-weight-bold text-gray-800">@kundenStatistik.Gesamt</div>
                                 <div class="mt-2">
                                     <small class="text-success">
-                                        <i class="bi bi-arrow-up"></i> @kundenStatistik.HeuteErstellt heute
+                                        📈 @kundenStatistik.HeuteErstellt heute erstellt
                                     </small>
                                 </div>
                             </div>
@@ -199,12 +214,12 @@
                             }
                         </div>
 
-                        @if (!string.IsNullOrEmpty(suchText) && (suchergebnisseKunden.Any() || suchergebnisseKontakte.Any()))
+                        @if (!string.IsNullOrEmpty(suchText) && (suchergebnisseKunden.Count > 0 || suchergebnisseKontakte.Count > 0))
                         {
                             <div class="mt-3">
                                 <h6>Suchergebnisse:</h6>
 
-                                @if (suchergebnisseKunden.Any())
+                                @if (suchergebnisseKunden.Count > 0)
                                 {
                                     <div class="mb-3">
                                         <small class="text-muted">Kunden (@suchergebnisseKunden.Count)</small>
@@ -223,7 +238,7 @@
                                     </div>
                                 }
 
-                                @if (suchergebnisseKontakte.Any())
+                                @if (suchergebnisseKontakte.Count > 0)
                                 {
                                     <div>
                                         <small class="text-muted">Kontakte (@suchergebnisseKontakte.Count)</small>
@@ -254,7 +269,7 @@
                         <h5 class="card-title mb-0">📋 Letzte Kunden</h5>
                     </div>
                     <div class="card-body">
-                        @if (letzteKunden.Any())
+                        @if (letzteKunden.Count > 0)
                         {
                             <div class="list-group list-group-flush">
                                 @foreach (var kunde in letzteKunden)
@@ -319,17 +334,25 @@
     private KontakteStatistik kontakteStatistik = new();
     private AufgabenStatistik aufgabenStatistik = new();
     private string aktivitaetsStatistik = "0";
-    private List<Kunde> alleKunden = [];
-    private List<Kontakt> alleKontakte = [];
-    private List<Kunde> letzteKunden = [];
+    private List<Kunde> alleKunden = new();
+    private List<Kontakt> alleKontakte = new();
+    private List<Kunde> letzteKunden = new();
     private string suchText = "";
     private bool isLoading = false;
-    private List<Kunde> suchergebnisseKunden = [];
-    private List<Kontakt> suchergebnisseKontakte = [];
+    private List<Kunde> suchergebnisseKunden = new();
+    private List<Kontakt> suchergebnisseKontakte = new();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadDashboardData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadDashboardData();
+        }
     }
 
     private async Task LoadDashboardData()
@@ -339,20 +362,15 @@
 
         try
         {
-            // Paralleles Laden der Daten
-            var kundenTask = KundeService.GetKundenAsync();
-            var kontakteTask = KontaktService.GetKontakteAsync();
-            var aufgabenTask = AufgabeService.GetAufgabenAsync();
-
-            await Task.WhenAll(kundenTask, kontakteTask, aufgabenTask);
-
-            alleKunden = await kundenTask;
-            alleKontakte = await kontakteTask;
-            var aufgaben = await aufgabenTask;
+            // Einfaches Laden der Daten
+            alleKunden = await KundeService.GetKundenAsync();
+            alleKontakte = await KontaktService.GetKontakteAsync();
+            var aufgaben = await AufgabeService.GetAufgabenAsync();
 
             // Kunden Statistik
             kundenStatistik.Gesamt = alleKunden.Count;
-            kundenStatistik.HeuteErstellt = alleKunden.Count(k => k.Erstellungsdatum.Date == DateTime.Today);
+            kundenStatistik.HeuteErstellt = alleKunden.Count(k =>
+                k.Erstellungsdatum.Date == DateTime.Today);
             kundenStatistik.MitFirma = alleKunden.Count(k => !string.IsNullOrEmpty(k.Firma));
             kundenStatistik.MitTelefon = alleKunden.Count(k => !string.IsNullOrEmpty(k.Telefon));
 
@@ -363,26 +381,41 @@
 
             // Aufgaben Statistik
             aufgabenStatistik.Gesamt = aufgaben.Count;
-            aufgabenStatistik.HeuteFaellig = aufgaben.Count(a => a.Fälligkeitsdatum.Date == DateTime.Today && a.Status != "Erledigt");
+            aufgabenStatistik.HeuteFaellig = aufgaben.Count(a =>
+                a.Fälligkeitsdatum.Date == DateTime.Today && a.Status != "Erledigt");
             aufgabenStatistik.Offen = aufgaben.Count(a => a.Status == "Offen");
             aufgabenStatistik.Erledigt = aufgaben.Count(a => a.Status == "Erledigt");
 
-            // Aktivitäts Statistik (vereinfacht)
+            // Aktivitäts Statistik
             aktivitaetsStatistik = (kundenStatistik.HeuteErstellt + aufgabenStatistik.HeuteFaellig).ToString();
 
             // Letzte Kunden
-            letzteKunden = alleKunden.OrderByDescending(k => k.Erstellungsdatum).Take(5).ToList();
+            letzteKunden = alleKunden
+                .OrderByDescending(k => k.Erstellungsdatum)
+                .Take(5)
+                .ToList();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            // Fehlerbehandlung
-            Console.WriteLine($"Fehler beim Laden der Dashboard-Daten: {ex.Message}");
+            // Fallback: Einfache Statistik setzen
+            kundenStatistik.Gesamt = 0;
+            kundenStatistik.HeuteErstellt = 0;
+            kontakteStatistik.Gesamt = 0;
+            aufgabenStatistik.Gesamt = 0;
+            aktivitaetsStatistik = "0";
+            letzteKunden = new List<Kunde>();
         }
         finally
         {
             isLoading = false;
             StateHasChanged();
         }
+    }
+
+    // Methode zum Aktualisieren der Daten
+    private async Task RefreshData()
+    {
+        await LoadDashboardData();
     }
 
     private void Suchen()

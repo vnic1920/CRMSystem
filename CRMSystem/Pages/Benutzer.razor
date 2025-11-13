@@ -18,7 +18,7 @@
             </div>
         </div>
 
-        @if (benutzer.Any())
+        @if (benutzer.Count > 0)
         {
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -38,10 +38,19 @@
                                 <td>@user.Vorname @user.Nachname</td>
                                 <td>@user.Email</td>
                                 <td>
-                                    <select value="@userRollen[user.Id]" @onchange="@((ChangeEventArgs e) => RolleAendern(user.Id, e.Value?.ToString()))">
-                                        <option value="Mitarbeiter">Mitarbeiter</option>
-                                        <option value="Manager">Manager</option>
-                                        <option value="Administrator">Administrator</option>
+                                    <select @onchange="(e => OnRolleChanged(user.Id, e))" class="form-select form-select-sm">
+                                        @if (userRoles.TryGetValue(user.Id, out var currentRole))
+                                        {
+                                            <option value="Mitarbeiter" selected=@(currentRole == "Mitarbeiter")>Mitarbeiter</option>
+                                            <option value="Manager" selected=@(currentRole == "Manager")>Manager</option>
+                                            <option value="Administrator" selected=@(currentRole == "Administrator")>Administrator</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Mitarbeiter" selected>Mitarbeiter</option>
+                                            <option value="Manager">Manager</option>
+                                            <option value="Administrator">Administrator</option>
+                                        }
                                     </select>
                                 </td>
                                 <td>@user.Erstellungsdatum.ToString("dd.MM.yyyy")</td>
@@ -55,6 +64,12 @@
                         }
                     </tbody>
                 </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                <p>Keine Benutzer gefunden.</p>
             </div>
         }
 
@@ -118,7 +133,7 @@
 
 @code {
     private List<ApplicationUser> benutzer = new();
-    private Dictionary<string, string> userRollen = new();
+    private Dictionary<string, string> userRoles = new();
     private bool neuerBenutzerModal = false;
     private ApplicationUser neuerBenutzer = new();
     private string neuerBenutzerPasswort = string.Empty;
@@ -133,27 +148,56 @@
     private async Task BenutzerLaden()
     {
         benutzer = UserManager.Users.ToList();
-
-        foreach (var user in benutzer)
-        {
-            var rollen = await UserManager.GetRolesAsync(user);
-            userRollen[user.Id] = rollen.FirstOrDefault() ?? "Mitarbeiter";
-        }
+        await LoadUserRoles();
         StateHasChanged();
     }
 
-    private async Task RolleAendern(string userId, string? neueRolle)
+    private async Task LoadUserRoles()
     {
-        if (string.IsNullOrEmpty(neueRolle)) return;
-
-        var user = await UserManager.FindByIdAsync(userId);
-        if (user != null)
+        userRoles.Clear();
+        foreach (var user in benutzer)
         {
-            var aktuelleRollen = await UserManager.GetRolesAsync(user);
-            await UserManager.RemoveFromRolesAsync(user, aktuelleRollen);
-            await UserManager.AddToRoleAsync(user, neueRolle);
-            statusMessage = $"✅ Rolle für {user.Email} geändert zu {neueRolle}";
-            await BenutzerLaden();
+            var roles = await UserManager.GetRolesAsync(user);
+            userRoles[user.Id] = roles.FirstOrDefault() ?? "Mitarbeiter";
+        }
+    }
+
+    private async void OnRolleChanged(string userId, ChangeEventArgs e)
+    {
+        var neueRolle = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(neueRolle))
+        {
+            await RolleAendern(userId, neueRolle);
+        }
+    }
+
+    private async Task RolleAendern(string userId, string neueRolle)
+    {
+        try
+        {
+            var user = await UserManager.FindByIdAsync(userId);
+            if (user != null && user.Email != "admin@crm.de")
+            {
+                var aktuelleRollen = await UserManager.GetRolesAsync(user);
+                await UserManager.RemoveFromRolesAsync(user, aktuelleRollen);
+                await UserManager.AddToRoleAsync(user, neueRolle);
+
+                // Update local role
+                userRoles[userId] = neueRolle;
+
+                statusMessage = $"✅ Rolle für {user.Email} geändert zu {neueRolle}";
+                StateHasChanged();
+            }
+            else if (user?.Email == "admin@crm.de")
+            {
+                statusMessage = "❌ Admin-Rolle kann nicht geändert werden!";
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"❌ Fehler beim Ändern der Rolle: {ex.Message}";
+            StateHasChanged();
         }
     }
 
@@ -188,27 +232,35 @@
             return;
         }
 
-        neuerBenutzer.UserName = neuerBenutzer.Email;
-        var result = await UserManager.CreateAsync(neuerBenutzer, neuerBenutzerPasswort);
+        try
+        {
+            neuerBenutzer.UserName = neuerBenutzer.Email;
+            var result = await UserManager.CreateAsync(neuerBenutzer, neuerBenutzerPasswort);
 
-        if (result.Succeeded)
-        {
-            await UserManager.AddToRoleAsync(neuerBenutzer, neuerBenutzerRolle);
-            statusMessage = $"✅ Benutzer {neuerBenutzer.Email} erstellt!";
-            neuerBenutzerModal = false;
-            await BenutzerLaden();
+            if (result.Succeeded)
+            {
+                await UserManager.AddToRoleAsync(neuerBenutzer, neuerBenutzerRolle);
+                statusMessage = $"✅ Benutzer {neuerBenutzer.Email} erstellt!";
+                neuerBenutzerModal = false;
+                await BenutzerLaden();
+            }
+            else
+            {
+                statusMessage = $"❌ Fehler: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+            }
         }
-        else
+        catch (Exception ex)
         {
-            statusMessage = $"❌ Fehler: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+            statusMessage = $"❌ Fehler beim Erstellen: {ex.Message}";
         }
+
         StateHasChanged();
     }
 
     private async Task BenutzerLoeschen(string userId)
     {
         var user = await UserManager.FindByIdAsync(userId);
-        if (user != null && user.Email != "admin@crm.de") // Admin nicht löschbar
+        if (user != null && user.Email != "admin@crm.de")
         {
             var result = await UserManager.DeleteAsync(user);
             if (result.Succeeded)
@@ -220,12 +272,12 @@
             {
                 statusMessage = $"❌ Fehler beim Löschen: {string.Join(", ", result.Errors.Select(e => e.Description))}";
             }
-            StateHasChanged();
         }
         else
         {
             statusMessage = "❌ Admin-Benutzer kann nicht gelöscht werden!";
-            StateHasChanged();
         }
+
+        StateHasChanged();
     }
 }

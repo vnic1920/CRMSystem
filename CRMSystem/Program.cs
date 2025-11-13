@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add logging
+builder.Services.AddLogging();
+
 // Database context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -31,7 +34,6 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ApplicationUser>>();
 
 // Custom Services
-// Custom Services
 builder.Services.AddScoped<IKundeService, KundeService>();
 builder.Services.AddScoped<IAufgabeService, AufgabeService>();
 builder.Services.AddScoped<IKontaktService, KontaktService>();
@@ -50,6 +52,21 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Seed Data
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await SeedData.Initialize(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred seeding the DB.");
+    }
+}
 
 app.MapRazorPages();
 app.MapBlazorHub();

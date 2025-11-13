@@ -41,6 +41,40 @@ namespace CRMSystem.Data
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(adminUser, "Administrator");
+                    await userManager.AddToRoleAsync(adminUser, "Manager");
+                }
+            }
+            else
+            {
+                // Sicherstellen, dass Admin alle Rollen hat
+                var roles = await userManager.GetRolesAsync(adminUser);
+                if (!roles.Contains("Administrator"))
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Administrator");
+                }
+                if (!roles.Contains("Manager"))
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Manager");
+                }
+            }
+
+            // Test-Mitarbeiter erstellen
+            var mitarbeiterUser = await userManager.FindByEmailAsync("mitarbeiter@crm.de");
+            if (mitarbeiterUser == null)
+            {
+                mitarbeiterUser = new ApplicationUser
+                {
+                    UserName = "mitarbeiter@crm.de",
+                    Email = "mitarbeiter@crm.de",
+                    Vorname = "Max",
+                    Nachname = "Mitarbeiter",
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(mitarbeiterUser, "Mitarbeiter123!");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(mitarbeiterUser, "Mitarbeiter");
                 }
             }
         }
